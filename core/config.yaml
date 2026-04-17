@@ -1,0 +1,132 @@
+# SuOS 系统应用注册表
+usrs:
+  - id: 1000
+    name: "All" #泛指所有用户
+    group: "special"
+    linux_id: [-1,-1,-1] 
+    acl: "all_accessible"  #无实际地址不能访问
+    status: "idle"
+
+  - id: 1001
+    name: "Main"
+    group: "core"
+    linux_id: [-1,-1,-1] #pid,uid,gid
+    acl: "core_only" #访问控制列表，定义哪些用户或组可以访问该应用
+    status: "idle"
+
+  - id: 1002
+    name: "APP_Manager" 
+    group: "core"
+    linux_id: [-1,-1,-1] 
+    acl: "core_only"  
+    status: "idle"
+
+  - id: 1003
+    name: "Graphic" 
+    group: "core"
+    linux_id: [-1,-1,-1] 
+    acl: "out_optional"  #根据app权限带限制的访问
+    status: "idle"
+
+  - id: 1004
+    name: "Driver" 
+    group: "core"
+    linux_id: [-1,-1,-1] 
+    acl: "out_optional" 
+    status: "idle"
+    
+  - id: 1005
+    name: "Network" 
+    group: "core"
+    linux_id: [-1,-1,-1] 
+    acl: "out_optional" 
+    status: "idle"
+
+  - id: 1006
+    name: "APP_Container" 
+    group: "core"
+    linux_id: [-1,-1,-1] 
+    acl: "core_only" 
+    status: "idle"
+
+  - id: 1007
+    name: "Router" #只在心跳回传时启用
+    group: "core"
+    linux_id: [-1,-1,-1] #与main公用进程
+    acl: "all_accessible" 
+    status: "idle"
+
+
+
+part:
+  - id: 10000
+    name: "All"
+    father_name: "All"
+    acl: "all_accessible"
+
+  - id: 10001
+    name: "Main"
+    father_name: "Main"
+    acl: "core_only"
+
+  - id: 10002
+    name: "APP_Manager"
+    father_name: "APP_Manager"
+    acl: "core_only"
+
+  - id: 10003
+    name: "APP_Run"
+    father_name: "APP_Manager"
+    acl: "out_optional"
+
+  - id: 10004
+    name: "Display" #此驱动需要根据appmanager的消息进行图层区域合法性检查
+    father_name: "Graphic"
+    acl: "out_optional"
+
+  - id: 10005
+    name: "Video_Decording"
+    father_name: "Graphic"
+    acl: "out_optional"
+
+  - id: 10006
+    name: "Location_Service"
+    father_name: "Driver"
+    acl: "out_optional"
+
+  - id: 10007
+    name: "Health_Service"
+    father_name: "Driver"
+    acl: "out_optional"
+
+  - id: 10008
+    name: "RealTime_Health_Service"
+    father_name: "Driver"
+    acl: "out_optional"
+
+  - id: 10009
+    name: "Mqtt_Client"
+    father_name: "Network"
+    acl: "out_optional"
+
+  - id: 10010
+    name: "Http_Client"
+    father_name: "Network"
+    acl: "out_optional"
+    
+  - id: 10011
+    name: "APP_Container"
+    father_name: "APP_Container"
+    acl: "core_only"
+ 
+  - id: 10012
+    name: "Router"
+    father_name: "Router"
+    acl: "all_accessible"
+
+apps:
+  - id: 100001   
+    name: "sysUI"
+    linux_id: [-1,-1,-1] 
+    status: "idle"
+    acl: ["APP_Run", "Display", "Video_Decording", "Mqtt_Client", "Http_Client"]

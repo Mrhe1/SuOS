@@ -1,0 +1,12 @@
+namespace SuOS.Uds.Msg;
+
+table MessageEnvelope {
+  sender_usr: uint32;
+  sender_part: uint32;
+  receiver_usr: uint32;
+  receiver_part: uint32;
+  cmd_id: uint32;
+  payload: [ubyte]; // 这里存放第二层的 FlatBuffers 字节数组
+}
+
+root_type MessageEnvelope;

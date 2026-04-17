@@ -1,0 +1,15 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "linux-remote",
+            "displayName": "Debian 远程原生构建",
+            "description": "直接在 Debian 服务器上使用本地 GCC 编译",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        }
+    ]
+}
