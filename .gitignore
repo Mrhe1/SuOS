@@ -1,0 +1,12 @@
+# 忽略编译文件夹
+build/
+out/
+bin/
+
+# 忽略缓存
+.cache/
+CMakeCache.txt
+CMakeFiles/
+
+# 忽略 VS Code 本地配置
+.vscode/
