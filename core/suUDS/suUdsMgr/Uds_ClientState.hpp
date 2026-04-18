@@ -7,7 +7,7 @@ namespace SuOS::Uds::ClientState {
 		Working,
 		Reconnecting,
 		Dead,
-		Stoiping,
+		Stopping,
 		Error
 	};
 

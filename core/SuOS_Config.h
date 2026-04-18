@@ -2,6 +2,8 @@
 #define SUOS_CONFIG_H
 
 #include <cstdint>
+#include <string>
+#include <string_view>
 
 namespace SuOS {
     namespace Config {
@@ -18,15 +20,15 @@ namespace SuOS {
             constexpr uint32_t ROUTER = 1007;
         }
 
-        nameapce UsrPath { 
-            constexpr std::string ALL = "";
-            constexpr std::string MAIN = "";
-            constexpr std::string APP_MANAGER = "";
-            constexpr std::string GRAPHIC = "";
-            constexpr std::string DRIVER = "";
-            constexpr std::string NETWORK = "";
-            constexpr std::string APP_CONTAINER = "";
-            constexpr std::string ROUTER = "";
+        namespace UsrPath { 
+            constexpr std::string_view ALL = "";
+            constexpr std::string_view MAIN = "";
+            constexpr std::string_view APP_MANAGER = "";
+            constexpr std::string_view GRAPHIC = "";
+            constexpr std::string_view DRIVER = "";
+            constexpr std::string_view NETWORK = "";
+            constexpr std::string_view APP_CONTAINER = "";
+            constexpr std::string_view ROUTER = "";
         }
 
         // === Part IDs (组件/服务注册 ID) ===
