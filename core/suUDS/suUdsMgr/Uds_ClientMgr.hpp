@@ -15,8 +15,8 @@ namespace SuOS::UDS::ClientMgr {
 	public:
 		using onError = std::function<void(const uint32_t cid, uint32_t error_type, std::string message)>;
 
-		ClientManager(int my_id) : _client(std::make_shared<SuOS::Uds::Client::Uds_Client>()), _my_id(my_id), 
-		_builder(_my_id) {
+		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _client(std::make_shared<SuOS::Uds::Client::Uds_Client>()), _my_id(my_id), 
+		_builder(_my_id, runtime), _parser(runtime), _runtime(runtime) {
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////// client 回调实现////////////////////////////////////////
 		/////////////////////////////////////////////////
@@ -33,7 +33,34 @@ namespace SuOS::UDS::ClientMgr {
 
 				auto guard = _parser.ParseMsg(buffer, size);
 
-				// 后续业务逻辑...
+				if (guard.isValid()) {
+					// 获取消息
+					//获取 cmd_id
+					auto cmd_id = guard.getCmdId();
+					// 获取 payload
+					auto payload_data = guard.payloadData();
+					auto paylod_size = guard.payloadSize();
+					auto payload = std::vector<uint8_t>(payload_data, payload_data + paylod_size);
+					// 获取 sender_usr
+					auto sender_usr = guard.getSenderUsr();
+					// 获取 sender_part
+					auto sender_part = guard.getSenderPart();
+					// 获取 receiver_usr
+					auto receiver_usr = guard.getReceiverUsr();
+					// 获取 receiver_part
+					auto receiver_part = guard.getReceiverPart();
+
+					// 处理消息
+
+					if(receiver_usr == _my_id) {
+						if(cmd_id == ) {
+							// 处理 ExampleCommand
+						}
+						else {
+							// 处理其他命令
+						}
+					}
+				}
 			};
 
 			// error callback
@@ -72,10 +99,10 @@ namespace SuOS::UDS::ClientMgr {
 			_onUdsConted = [this](const uint32_t cid, int pid, int uid, int gid) {
 				onConnectResult(true, pid, uid, gid);
 			};
-
 		}
 
 		uint32_t Start() {
+			_runtime->dispatch([this] () {
 			if (_stateMgr.getState() != SuOS::Uds::ClientState::State::Idle) {
 				return SuOS::Uds::ClientMgr::Errorcode::StateError;
 			}
@@ -84,9 +111,11 @@ namespace SuOS::UDS::ClientMgr {
 			if(_client == nullptr) return SuOS::Uds::ClientMgr::Errorcode::UdsBadEroor;
 			// connect等待回报
 			connect(_client);
+		});
         }
 
         uint32_t Stop() { 
+			_runtime->dispatch([this] () {
             if (_stateMgr.getState() != SuOS::Uds::ClientState::State::Working) {
                 return SuOS::Uds::ClientMgr::Errorcode::StateError;
             }
@@ -96,11 +125,18 @@ namespace SuOS::UDS::ClientMgr {
 			_client = nullptr;
             _stateMgr.setState(SuOS::Uds::ClientState::State::Idle);
             return SuOS::Uds::ClientMgr::Errorcode::UdsClientOK;
+		});
         }
 
 		uint32_t sendmsg(uint32_t sender_part, uint32_t receiver_usr,
             uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload) {
-
+				_runtime->dispatch([this, sender_part, receiver_usr, receiver_part, cmd_id, sub_payload] () {
+					auto guard = _builder.finalizeEnvelope(sender_part, receiver_usr, receiver_part, cmd_id, sub_payload);
+					uint8_t* data = guard.data();
+					size_t size = guard.size();
+					std::vector<char> data_vec(data, data + size);
+					_client->send_async(data_vec);
+				});
 			}
 
 	private:
@@ -124,16 +160,13 @@ namespace SuOS::UDS::ClientMgr {
 		// // connect_dur:单次连接持续时间秒， coonect_timeout:总超时时间秒
 		void connect(std::shared_ptr<SuOS::Uds::Client::Uds_Client> client) {
 			if (_runtime) {
-
 				_connect_task = _runtime->scheduleAtFixedRate(100, (_client_connect_dur + 1) * 1000, false,
 					[client, this]() {
 						client->connect_to_server(_client_connect_dur);
-					});
-
-				_runtime->schedule(_client_connect_TO, false, [this]() {
-					// timeout
-					onConnectResult(false, 0, 0, 0);
-					});
+					}, client_connect_times, [this]() {
+						// 超时回调
+						handleError(SuOS::Uds::ClientMgr::Errorcode::ConnectionTimeOut, "ConnectErrorTimeout");
+					}, _client_connect_dur);
 			}
 		}
 
@@ -274,7 +307,7 @@ namespace SuOS::UDS::ClientMgr {
         SuOS::Uds::MsgParser::MessageParser _parser;
 		std::shared_ptr<SuOS::Runtime::suRuntime> _runtime;
 		std::shared_ptr<SuOS::Runtime::suRuntime::ScheduledTask> _connect_task;
-		const int _client_connect_TO = SuOS::Uds::Df::client_connect_TO;
+		const int client_connect_times = SuOS::Uds::Df::client_connect_times;
 		const int _client_connect_dur = SuOS::Uds::Df::client_connect_dur;
 		const int _router_id = SuOS::Config::Usr::ROUTER;
 		const int _router_part = SuOS::Config::Part::ROUTER;

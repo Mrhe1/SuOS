@@ -17,8 +17,14 @@ namespace SuOS::Runtime {
 
             void cancel() {
                 if (timer_) {
-                    timer_->cancel(); // 触发 asio 的取消信号
+                    boost::system::error_code ec;
+                    timer_->cancel(ec); // 触发 asio 的取消信号
                 }
+            }
+
+            // 增加析构函数：确保句柄销毁时自动停止计时器
+            ~ScheduledTask() {
+                cancel();
             }
 
         private:
@@ -76,7 +82,7 @@ namespace SuOS::Runtime {
             auto timer = std::make_shared<boost::asio::steady_timer>(
                 io_context_, std::chrono::milliseconds(delay_ms));
 
-            timer->async_wait([this, task, timer](const boost::system::error_code& ec) {
+            timer->async_wait([this, task, heavy, timer](const boost::system::error_code& ec) {
                 if (!ec) {
                     if (heavy) {
                         this->execute(task);      // 扔给线程池
@@ -97,7 +103,15 @@ namespace SuOS::Runtime {
         // initial_delay_ms: 第一次执行前的延迟
         // period_ms: 之后每次执行的间隔
         // 返回一个 shared_ptr 方便外部持有
-        std::shared_ptr<ScheduledTask> scheduleAtFixedRate(int initial_delay_ms, int period_ms, bool heavy = true, std::function<void()> task) {
+        std::shared_ptr<ScheduledTask> scheduleAtFixedRate(
+            int initial_delay_ms,  //第一次执行前的延迟
+            int period_ms,   // 之后每次执行的间隔
+            bool heavy = true,  // 是否在线程池执行
+            std::function<void()> task,
+            int execute_count = -1,  // 执行次数
+            std::function<void()> onCompeleted = nullptr, // 完成回调
+            int delay_after_complete_ms = 0 // 完成后延迟执行回调，单位毫秒
+            ) {
 
             auto timer = std::make_shared<boost::asio::steady_timer>(
                 io_context_, std::chrono::milliseconds(initial_delay_ms));
@@ -105,10 +119,13 @@ namespace SuOS::Runtime {
             // 创建句柄返回给用户
             auto handle = std::make_shared<ScheduledTask>(timer);
 
+            // 使用 std::shared_ptr<int> 包装计数器，使其在闭包间共享
+            auto remaining_count = std::make_shared<int>(execute_count);
+
             // 内部递归闭包
             auto self = std::make_shared<std::function<void(const boost::system::error_code&)>>();
 
-            *self = [this, timer, period_ms, task, heavy, self](const boost::system::error_code& ec) {
+            *self = [this, timer, period_ms, task, heavy, remaining_count, onCompeleted, self, delay_after_complete_ms](const boost::system::error_code& ec) {
                 // 重要：如果 ec 为 operation_aborted，说明外部调用了 cancel()，直接退出递归
                 if (ec == boost::asio::error::operation_aborted) {
                     return;
@@ -123,6 +140,30 @@ namespace SuOS::Runtime {
                     task();
                 }
 
+                if (*remaining_count > 0) {
+                    (*remaining_count)--; // 递减计数
+                }
+
+                if (*remaining_count == 0) {
+                    if(onCompeleted && delay_after_complete_ms == 0) {
+                        this->dispatch(onCompeleted);
+                    }
+                    else if(onCompeleted && delay_after_complete_ms > 0) {
+                        // 完成回调也需要延迟执行
+                        auto completion_timer = std::make_shared<boost::asio::steady_timer>(
+                            io_context_, std::chrono::milliseconds(delay_after_complete_ms));
+                        completion_timer->async_wait([onCompeleted, completion_timer, this](const boost::system::error_code& ec) {
+                            if (!ec) {
+                                this->dispatch(onCompeleted);
+                            }
+                            });
+                    }
+                    return;
+                } // 次数到了，停止递归
+
+                // 如果减完后变成 -1，就没必要再启动下一次计时了
+                //if (*remaining_count < 0) return;
+
                 // 排期下一次
                 timer->expires_at(timer->expiry() + std::chrono::milliseconds(period_ms));
                 timer->async_wait(*self);
@@ -132,11 +173,7 @@ namespace SuOS::Runtime {
             return handle;
         }
 
-        void execute(std::function<void()> task) {
-            boost::asio::post(worker_pool_, std::move(task));
-        }
-
-        void getIoContext() {
+        boost::asio::io_context& getIoContext() {
             return io_context_;
         }
 

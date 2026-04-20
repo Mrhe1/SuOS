@@ -1,4 +1,5 @@
 #include "suUdsMsg_generated.h"
+#include "suRuntime.hpp"
 #include <mutex>
 
 /// <warning> ///////////////////////////////////////
@@ -36,8 +37,12 @@ namespace SuOS::Uds::MsgParser {
             LockGuard& operator=(const LockGuard&) = delete;
         };
 
+        MessageParser(std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _runtime(runtime) {}
         // 构造时直接进行内存校验，确保包没损坏
         LockGuard ParseMsg(const uint8_t* buffer, size_t size) {
+            // 检查是否在事件循环中
+            if(!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
+            
             _verifier = std::make_unique<flatbuffers::Verifier>(buffer, size);
             if (SuOS::Uds::Msg::VerifyMessageEnvelopeBuffer(*_verifier)) {
                 //_mutex.lock(); 
@@ -50,6 +55,7 @@ namespace SuOS::Uds::MsgParser {
     private:
         const SuOS::Uds::Msg::MessageEnvelope* _envelope = nullptr;
         std::unique_ptr<flatbuffers::Verifier> _verifier;
+        std::shared_ptr<SuOS::Runtime::suRuntime> _runtime;
         //std::mutex _mutex;
         //std::mutex _dummy_mutex; // 用于校验失败时的占位
     };
