@@ -1,3 +1,6 @@
+#ifndef UDS_MSG_BUILDER_HPP
+#define UDS_MSG_BUILDER_HPP
+
 #include "suUdsMsg_generated.h"
 #include "suRuntime.hpp"
 #include <mutex>
@@ -57,3 +60,5 @@ namespace SuOS::Uds::MsgBuilder {
         //std::mutex _mutex;
     };
 }
+
+#endif // UDS_MSG_BUILDER_HPP

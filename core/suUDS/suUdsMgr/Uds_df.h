@@ -1,3 +1,6 @@
+#ifndef UDS_DF_H
+#define UDS_DF_H
+
 #include <string>
 #include <string_view>
 
@@ -9,4 +12,8 @@ namespace SuOS::Uds::Df {
 	inline constexpr std::string_view uds_path = "/tmp/suUDS.sock";
 	// 需根据实际情况修改
 	inline constexpr std::string_view router_path = "/SuOS/router";
+	// 心跳间隔时间，单位为ms
+	inline constexpr int heartbeat_interval = 2000;
 } 
+
+#endif // UDS_DF_H

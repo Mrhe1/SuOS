@@ -8,6 +8,11 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 
+#include "yaml-cpp/yaml.h"
+#include "nlohmann/json.hpp"
+#include "Datastruct.h"
+#include "suDbError.h"
+
 using namespace boost::multi_index;
 using json = nlohmann::json;
 
@@ -43,9 +48,9 @@ namespace SuOS::Database {
         }
 
         // --- 4. 用户查询 (按 Group) ---
-        std::vector<PartConfig> getUsrByGroup(const std::string& group) const {
+        std::vector<UsrConfig> getUsrByGroup(const std::string& group) const {
             //  获取对应的非唯一索引视图
-            auto& group_index = reg.get<by_group>();
+            auto& group_index = usrReg.get<by_group>();
             // 使用 equal_range 获取 [起点, 终点) 的迭代器对
             auto range = group_index.equal_range(group);
             
@@ -87,12 +92,12 @@ namespace SuOS::Database {
         // --- 4. part查询 (按 father) ---
         std::vector<PartConfig> getPartByFather(const std::string& father) const {
             //  获取对应的非唯一索引视图
-            auto& group_index = reg.get<by_father>();
+            auto& group_index = partReg.get<by_father>();
             // 使用 equal_range 获取 [起点, 终点) 的迭代器对
             auto range = group_index.equal_range(father);
 
             // 遍历这个范围
-            std::vector<UsrConfig> result;
+            std::vector<PartConfig> result;
             for (auto it = range.first; it != range.second; ++it) {
                 result.push_back(*it);
             }
@@ -197,3 +202,5 @@ namespace SuOS::Database {
         APPRes appReg;
     };
 }
+
+#endif // SU_DATABASE_HPP

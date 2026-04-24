@@ -46,6 +46,11 @@ namespace SuOS {
             constexpr uint32_t HTTP_CLIENT = 10010;
             constexpr uint32_t APP_CONTAINER = 10011;
             constexpr uint32_t ROUTER = 10012;
+            constexpr uint32_t Heartbeat = 10013;
+        }
+
+        namespace CommandId {
+            constexpr uint32_t heartbeat_id = 100001;
         }
 
     } // namespace Config

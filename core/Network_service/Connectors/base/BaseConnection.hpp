@@ -51,7 +51,7 @@ protected:
     }
 
     void emitData(int code) {
-        if (auto l = listener_.lock()) l->onDataReceived(conn_id_, code);
+        //if (auto l = listener_.lock()) l->onDataReceived(conn_id_, code);
     }
 
     void emitAction(const std::string& data) {

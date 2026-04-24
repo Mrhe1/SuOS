@@ -11,7 +11,8 @@ namespace SuOS::Uds::ClientMgr::Errorcode {
         inline constexpr uint32_t UdsBadEroor = 0x03;
         inline constexpr uint32_t CertificationError = 0x04;
         inline constexpr uint32_t StateError = 0x05;
-        //inline constexpr uint32_t ConnectTimedOut = 0x06;
+        // 不在enventloop中调用
+        inline constexpr uint32_t NotInEventLoop = 0x06;
 }
 
 #endif // UDS_CLIENTMGR_ERRORCODE_H

@@ -1,0 +1,12 @@
+# /home/hss/SuOS/.clangd
+CompileFlags:
+  Add:
+    - "-I/home/hss/SuOS/core/suUDS/suUdsMgr"
+    - "-I/home/hss/SuOS/core/suUDS/suUdsMsg"
+    - "-I/home/hss/SuOS/core/suUDS/basic/include"
+    - "-I/home/hss/SuOS/core/suRuntime/include"
+    - "-I/home/hss/SuOS/core/Main/include"
+    - "-I/home/hss/SuOS/core"
+    - "-I/usr/include"
+    - "-I/usr/local/include" 
+    - "-std=c++20"

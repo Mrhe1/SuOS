@@ -1,3 +1,6 @@
+#ifndef UDS_MSG_PARSER_HPP
+#define UDS_MSG_PARSER_HPP
+
 #include "suUdsMsg_generated.h"
 #include "suRuntime.hpp"
 #include <mutex>
@@ -60,3 +63,5 @@ namespace SuOS::Uds::MsgParser {
         //std::mutex _dummy_mutex; // 用于校验失败时的占位
     };
 } // namespace SuOS::Uds::MsgParser
+
+#endif // UDS_MSG_PARSER_HPP

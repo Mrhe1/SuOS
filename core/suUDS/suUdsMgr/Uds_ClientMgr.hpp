@@ -6,6 +6,8 @@
 #include "Uds_MsgParser.hpp"
 #include "SuOS_Config.h"
 #include "Uds_df.h"
+#include "Uds_Client_heartbeat.hpp"
+#include <bits/stdint-uintn.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <limits.h>
@@ -14,9 +16,13 @@ namespace SuOS::UDS::ClientMgr {
 	class ClientManager {
 	public:
 		using onError = std::function<void(const uint32_t cid, uint32_t error_type, std::string message)>;
-
-		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _client(std::make_shared<SuOS::Uds::Client::Uds_Client>()), _my_id(my_id), 
-		_builder(_my_id, runtime), _parser(runtime), _runtime(runtime) {
+		using onMsg = std::function<void(const uint32_t sender_usr, 
+										const uint32_t sender_part, 
+										const uint32_t receiver_part,
+										const uint32_t cmd_id,
+										const std::vector<uint8_t>& data)>;
+		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime, onError on_error, onMsg on_msg) : _client(std::make_shared<SuOS::Uds::Client::Uds_Client>()), _my_id(my_id), 
+		_builder(my_id, runtime), _parser(runtime), _runtime(runtime), _onMsg(on_msg), _onError(on_error) {
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////// client 回调实现////////////////////////////////////////
 		/////////////////////////////////////////////////
@@ -53,11 +59,14 @@ namespace SuOS::UDS::ClientMgr {
 					// 处理消息
 
 					if(receiver_usr == _my_id) {
-						if(cmd_id == ) {
-							// 处理 ExampleCommand
+						if(cmd_id == _heartbeat_id) {
+							// 处理心跳包
 						}
 						else {
 							// 处理其他命令
+							if(_onMsg) {
+								_onMsg(sender_usr, sender_part, receiver_part, cmd_id, payload);
+							}
 						}
 					}
 				}
@@ -102,7 +111,7 @@ namespace SuOS::UDS::ClientMgr {
 		}
 
 		uint32_t Start() {
-			_runtime->dispatch([this] () {
+			if(!_runtime->isInEventLoop()) return SuOS::Uds::ClientMgr::Errorcode::NotInEventLoop;
 			if (_stateMgr.getState() != SuOS::Uds::ClientState::State::Idle) {
 				return SuOS::Uds::ClientMgr::Errorcode::StateError;
 			}
@@ -111,11 +120,11 @@ namespace SuOS::UDS::ClientMgr {
 			if(_client == nullptr) return SuOS::Uds::ClientMgr::Errorcode::UdsBadEroor;
 			// connect等待回报
 			connect(_client);
-		});
+			return SuOS::Uds::ClientMgr::Errorcode::UdsClientOK;
         }
 
         uint32_t Stop() { 
-			_runtime->dispatch([this] () {
+			if(!_runtime->isInEventLoop()) return SuOS::Uds::ClientMgr::Errorcode::NotInEventLoop;
             if (_stateMgr.getState() != SuOS::Uds::ClientState::State::Working) {
                 return SuOS::Uds::ClientMgr::Errorcode::StateError;
             }
@@ -125,7 +134,6 @@ namespace SuOS::UDS::ClientMgr {
 			_client = nullptr;
             _stateMgr.setState(SuOS::Uds::ClientState::State::Idle);
             return SuOS::Uds::ClientMgr::Errorcode::UdsClientOK;
-		});
         }
 
 		uint32_t sendmsg(uint32_t sender_part, uint32_t receiver_usr,
@@ -137,6 +145,7 @@ namespace SuOS::UDS::ClientMgr {
 					std::vector<char> data_vec(data, data + size);
 					_client->send_async(data_vec);
 				});
+				return SuOS::Uds::ClientMgr::Errorcode::UdsClientOK;
 			}
 
 	private:
@@ -151,7 +160,7 @@ namespace SuOS::UDS::ClientMgr {
 		std::function<void(const uint32_t, int, int, int)> _onUdsConted;
 			
 		std::shared_ptr<SuOS::Uds::Client::Uds_Client> initClient() {
-			return std::make_shared<SuOS::Uds::Client::Uds_Client>(_router_id, _uds_path, _onUdsMsgCb, _onUdsError, _onUdsConted);
+			return std::make_shared<SuOS::Uds::Client::Uds_Client>(_runtime->getIoContext(),_router_id, _uds_path, _onUdsMsgCb, _onUdsError, _onUdsConted);
 		}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////连接处理//////////////////////////////
@@ -160,10 +169,10 @@ namespace SuOS::UDS::ClientMgr {
 		// // connect_dur:单次连接持续时间秒， coonect_timeout:总超时时间秒
 		void connect(std::shared_ptr<SuOS::Uds::Client::Uds_Client> client) {
 			if (_runtime) {
-				_connect_task = _runtime->scheduleAtFixedRate(100, (_client_connect_dur + 1) * 1000, false,
+				_connect_task = _runtime->scheduleAtFixedRate(100, (_client_connect_dur + 1) * 1000,
 					[client, this]() {
 						client->connect_to_server(_client_connect_dur);
-					}, client_connect_times, [this]() {
+					}, false, client_connect_times, [this]() {
 						// 超时回调
 						handleError(SuOS::Uds::ClientMgr::Errorcode::ConnectionTimeOut, "ConnectErrorTimeout");
 					}, _client_connect_dur);
@@ -301,6 +310,9 @@ namespace SuOS::UDS::ClientMgr {
 			
 		}
 		
+		onError _onError;
+		onMsg _onMsg;
+		SuOS::Uds::ClientMgr::Uds_Client_heartbeat _heartbeat;
 		SuOS::Uds::ClientState::ClientStateManager _stateMgr;
 		std::shared_ptr<SuOS::Uds::Client::Uds_Client> _client = nullptr;
 		SuOS::Uds::MsgBuilder::MessageBuilder _builder;
@@ -309,10 +321,11 @@ namespace SuOS::UDS::ClientMgr {
 		std::shared_ptr<SuOS::Runtime::suRuntime::ScheduledTask> _connect_task;
 		const int client_connect_times = SuOS::Uds::Df::client_connect_times;
 		const int _client_connect_dur = SuOS::Uds::Df::client_connect_dur;
-		const int _router_id = SuOS::Config::Usr::ROUTER;
-		const int _router_part = SuOS::Config::Part::ROUTER;
+		const uint32_t _router_id = SuOS::Config::Usr::ROUTER;
+		const uint32_t _router_part = SuOS::Config::Part::ROUTER;
+		const uint32_t _heartbeat_id = SuOS::Config::CommandId::heartbeat_id;
 		// 自身usr_id
-		const int _my_id;
+		const uint32_t _my_id;
 		const std::string _uds_path = std::string(SuOS::Uds::Df::uds_path);
 		const std::string _router_path = std::string(SuOS::Uds::Df::router_path);
 	};

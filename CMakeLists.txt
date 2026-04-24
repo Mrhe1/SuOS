@@ -1,6 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.15)
 project(SuOS VERSION 1.0.0 LANGUAGES CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,6 +19,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 # 查找依赖库
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(nlohmann_json REQUIRED)
 
 # 定义项目目录变量
 set(CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core")
@@ -84,6 +87,7 @@ target_include_directories(suRuntime INTERFACE
 # 创建主程序可执行文件
 add_executable(SuOS
     SuOS.cpp
+    core/suUDS/suUdsMgr/Uds_Client_heartbeat.hpp
 )
 
 target_include_directories(SuOS PRIVATE
@@ -100,6 +104,7 @@ target_link_libraries(SuOS PRIVATE
     suNetwork
     suRuntime
     pthread
+    nlohmann_json::nlohmann_json
 )
 
 # 创建测试可执行文件（可选）

@@ -77,7 +77,7 @@ namespace SuOS::Runtime {
         }
 
         // 延时执行 (Event Loop 计时 -> 到期后投递给 Thread Pool)
-        void schedule(int delay_ms, bool heavy = true, std::function<void()> task) {
+        void schedule(int delay_ms, std::function<void()> task, bool heavy = true) {
             // 使用 shared_ptr 管理 timer 生命周期，防止函数返回后 timer 被销毁
             auto timer = std::make_shared<boost::asio::steady_timer>(
                 io_context_, std::chrono::milliseconds(delay_ms));
@@ -106,9 +106,9 @@ namespace SuOS::Runtime {
         std::shared_ptr<ScheduledTask> scheduleAtFixedRate(
             int initial_delay_ms,  //第一次执行前的延迟
             int period_ms,   // 之后每次执行的间隔
-            bool heavy = true,  // 是否在线程池执行
             std::function<void()> task,
             int execute_count = -1,  // 执行次数
+            bool heavy = true,  // 是否在线程池执行
             std::function<void()> onCompeleted = nullptr, // 完成回调
             int delay_after_complete_ms = 0 // 完成后延迟执行回调，单位毫秒
             ) {

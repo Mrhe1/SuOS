@@ -1,0 +1,7 @@
+{
+    "clangd.arguments": [
+        "-j=1", 
+        "--pch-storage=disk",
+        "--malloc-trim"
+    ]
+}
