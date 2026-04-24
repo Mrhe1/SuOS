@@ -16,7 +16,7 @@ namespace SuOS::UDS::ClientMgr {
 		using onError = std::function<void(const uint32_t cid, uint32_t error_type, std::string message)>;
 
 		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _client(std::make_shared<SuOS::Uds::Client::Uds_Client>()), _my_id(my_id), 
-		_builder(_my_id, runtime), _parser(runtime), _runtime(runtime) {
+		_builder(my_id, runtime), _parser(runtime), _runtime(runtime) {
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////// client 回调实现////////////////////////////////////////
 		/////////////////////////////////////////////////
@@ -53,7 +53,7 @@ namespace SuOS::UDS::ClientMgr {
 					// 处理消息
 
 					if(receiver_usr == _my_id) {
-						if(cmd_id == ) {
+						if(cmd_id == 0) {
 							// 处理 ExampleCommand
 						}
 						else {
@@ -151,7 +151,7 @@ namespace SuOS::UDS::ClientMgr {
 		std::function<void(const uint32_t, int, int, int)> _onUdsConted;
 			
 		std::shared_ptr<SuOS::Uds::Client::Uds_Client> initClient() {
-			return std::make_shared<SuOS::Uds::Client::Uds_Client>(_router_id, _uds_path, _onUdsMsgCb, _onUdsError, _onUdsConted);
+			return std::make_shared<SuOS::Uds::Client::Uds_Client>(_runtime->getIoContext(),_router_id, _uds_path, _onUdsMsgCb, _onUdsError, _onUdsConted);
 		}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////连接处理//////////////////////////////
@@ -311,6 +311,7 @@ namespace SuOS::UDS::ClientMgr {
 		const int _client_connect_dur = SuOS::Uds::Df::client_connect_dur;
 		const int _router_id = SuOS::Config::Usr::ROUTER;
 		const int _router_part = SuOS::Config::Part::ROUTER;
+		const int heartbeat_id = SuOS::Config::CommandId::hartbeat_id;
 		// 自身usr_id
 		const int _my_id;
 		const std::string _uds_path = std::string(SuOS::Uds::Df::uds_path);

@@ -48,6 +48,10 @@ namespace SuOS {
             constexpr uint32_t ROUTER = 10012;
         }
 
+        namespace CommandId {
+            constexpr int heartbeat_id = 100001;
+        }
+
     } // namespace Config
 } // namespace SuOS
 
