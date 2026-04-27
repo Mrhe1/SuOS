@@ -16,13 +16,12 @@ namespace SuOS::UDS::ClientMgr {
 	class ClientManager {
 	public:
 		using onError = std::function<void(const uint32_t cid, uint32_t error_type, std::string message)>;
-		using onMsg = std::function<void(const uint32_t sender_usr, 
-										const uint32_t sender_part, 
-										const uint32_t receiver_part,
-										const uint32_t cmd_id,
-										const std::vector<uint8_t>& data)>;
-		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime, onError on_error, onMsg on_msg) : _client(std::make_shared<SuOS::Uds::Client::Uds_Client>()), _my_id(my_id), 
-		_builder(my_id, runtime), _parser(runtime), _runtime(runtime), _onMsg(on_msg), _onError(on_error) {
+		using onMsg = std::function<void(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload)>;
+		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime, onError onError, onMsg onMsg) : _client(std::make_shared<SuOS::Uds::Client::Uds_Client>()), _my_id(my_id), 
+		_builder(_my_id, runtime), _parser(runtime), _runtime(runtime), _onError(onError), _onMsg(onMsg), _heartbeat([this](uint32_t sender_part, uint32_t receiver_usr,
+            uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload) {
+			return this->sendmsg(sender_part, receiver_usr, receiver_part, cmd_id, sub_payload);
+		}, runtime) {
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////// client 回调实现////////////////////////////////////////
 		/////////////////////////////////////////////////
@@ -59,8 +58,8 @@ namespace SuOS::UDS::ClientMgr {
 					// 处理消息
 
 					if(receiver_usr == _my_id) {
-						if(cmd_id == _heartbeat_id) {
-							// 处理心跳包
+						if(cmd_id == _heartbeat_id && sender_part == _router_part && sender_usr == _router_id) {
+							// 处理 ExampleCommand
 						}
 						else {
 							// 处理其他命令
