@@ -53,6 +53,16 @@ namespace SuOS {
             constexpr uint32_t heartbeat_id = 100001;
         }
 
+        namespace uid {
+            // 待定
+            constexpr uint32_t ROUTER = 1001;
+        }
+
+        namespace gid {
+            // 待定
+            constexpr uint32_t ROUTER = 1001;
+        }
+
     } // namespace Config
 } // namespace SuOS
 

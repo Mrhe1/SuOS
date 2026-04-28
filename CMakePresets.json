@@ -2,13 +2,17 @@
     "version": 8,
     "configurePresets": [
         {
-            "name": "linux-remote",
-            "displayName": "Debian 远程原生构建",
-            "description": "直接在 Debian 服务器上使用本地 GCC 编译",
+            "name": "rk3506-cross",
+            "displayName": "RK3506 交叉编译",
+            "description": "使用 Luckfox RK3506 SDK 进行交叉编译",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_SYSROOT": "/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/arm-buildroot-linux-gnueabihf/sysroot",
+                "CMAKE_C_COMPILER": "/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/bin/arm-buildroot-linux-gnueabihf-gcc",
+                "CMAKE_CXX_COMPILER": "/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/bin/arm-buildroot-linux-gnueabihf-g++"
             }
         }
     ]

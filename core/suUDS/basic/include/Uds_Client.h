@@ -9,13 +9,13 @@
 #include <functional>
 
 // 错误码定义
-#include <Uds_Error_type.h>
+#include "Uds_Error_type.h"
 
 namespace SuOS::Uds::Client { 
 
     class Uds_Client : public std::enable_shared_from_this<Uds_Client> {
     public:
-        using MessageCallback = std::function<void(const uint32_t cid, const std::vector<char> data)>;
+        using MessageCallback = std::function<void(const uint32_t cid, const std::vector<char>& data)>;
         using onError = std::function<void(const uint32_t cid, uint32_t error_type, std::string message)>;
         using onConnected = std::function<void(const uint32_t cid, int pid, int uid, int gid)>;
 

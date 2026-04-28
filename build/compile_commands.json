@@ -1,27 +1,19 @@
 [
 {
   "directory": "/home/hss/SuOS/build",
-  "command": "/usr/bin/c++ -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_DYN_LINK -I../core/suUDS/basic/include -I../core/suUDS/suUdsMgr -I../core/suUDS/suUdsMsg -g -O0 -Wall -Wextra -std=c++2a -o CMakeFiles/uds_test.dir/core/suUDS/basic/src/test_uds.cpp.o -c /home/hss/SuOS/core/suUDS/basic/src/test_uds.cpp",
-  "file": "/home/hss/SuOS/core/suUDS/basic/src/test_uds.cpp"
-},
-{
-  "directory": "/home/hss/SuOS/build",
-  "command": "/usr/bin/c++ -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_DYN_LINK -DJSON_USE_IMPLICIT_CONVERSIONS=1 -I../ -I../core/Main/Database -I../core/Main/Router -I../core/Main/include -I../core/suUDS/basic/include -I../core/suUDS/suUdsMgr -I../core/suUDS/suUdsMsg -I../core/Network_service/Connectors/base -I../core/suRuntime/include -g -O0 -Wall -Wextra -std=c++2a -o CMakeFiles/SuOS.dir/SuOS.cpp.o -c /home/hss/SuOS/SuOS.cpp",
+  "command": "/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/bin/arm-buildroot-linux-gnueabihf-g++ --sysroot=/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/arm-buildroot-linux-gnueabihf/sysroot   -I../core/suUDS/basic/include -I../core/suUDS/suUdsMgr -I../core/suUDS/suUdsMsg -I../core/suRuntime/include  -g -O0 -Wall -Wextra   -std=c++2a -o CMakeFiles/SuOS.dir/SuOS.cpp.o -c /home/hss/SuOS/SuOS.cpp",
   "file": "/home/hss/SuOS/SuOS.cpp"
 },
+
 {
   "directory": "/home/hss/SuOS/build",
-  "command": "/usr/bin/c++ -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_DYN_LINK -I../core/Network_service/Connectors/base -g -O0 -Wall -Wextra -std=c++2a -o CMakeFiles/suNetwork.dir/core/Network_service/Connectors/mqtt_service/bin/mqtt_client.cpp.o -c /home/hss/SuOS/core/Network_service/Connectors/mqtt_service/bin/mqtt_client.cpp",
-  "file": "/home/hss/SuOS/core/Network_service/Connectors/mqtt_service/bin/mqtt_client.cpp"
-},
-{
-  "directory": "/home/hss/SuOS/build",
-  "command": "/usr/bin/c++ -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_DYN_LINK -I../core/suUDS/basic/include -g -O0 -Wall -Wextra -std=c++2a -o CMakeFiles/suUDS_basic.dir/core/suUDS/basic/src/Uds_Client.cpp.o -c /home/hss/SuOS/core/suUDS/basic/src/Uds_Client.cpp",
+  "command": "/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/bin/arm-buildroot-linux-gnueabihf-g++ --sysroot=/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/arm-buildroot-linux-gnueabihf/sysroot   -I../core/suUDS/basic/include  -g -O0 -Wall -Wextra   -std=c++2a -o CMakeFiles/suUDS_basic.dir/core/suUDS/basic/src/Uds_Client.cpp.o -c /home/hss/SuOS/core/suUDS/basic/src/Uds_Client.cpp",
   "file": "/home/hss/SuOS/core/suUDS/basic/src/Uds_Client.cpp"
 },
+
 {
   "directory": "/home/hss/SuOS/build",
-  "command": "/usr/bin/c++ -DBOOST_ALL_NO_LIB -DBOOST_SYSTEM_DYN_LINK -I../core/suUDS/basic/include -g -O0 -Wall -Wextra -std=c++2a -o CMakeFiles/suUDS_basic.dir/core/suUDS/basic/src/Uds_Server.cpp.o -c /home/hss/SuOS/core/suUDS/basic/src/Uds_Server.cpp",
+  "command": "/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/bin/arm-buildroot-linux-gnueabihf-g++ --sysroot=/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/arm-buildroot-linux-gnueabihf/sysroot   -I../core/suUDS/basic/include  -g -O0 -Wall -Wextra   -std=c++2a -o CMakeFiles/suUDS_basic.dir/core/suUDS/basic/src/Uds_Server.cpp.o -c /home/hss/SuOS/core/suUDS/basic/src/Uds_Server.cpp",
   "file": "/home/hss/SuOS/core/suUDS/basic/src/Uds_Server.cpp"
 }
 ]

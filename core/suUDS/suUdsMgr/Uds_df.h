@@ -13,7 +13,9 @@ namespace SuOS::Uds::Df {
 	// 需根据实际情况修改
 	inline constexpr std::string_view router_path = "/SuOS/router";
 	// 心跳间隔时间，单位为ms
-	inline constexpr int heartbeat_interval = 2000;
+	inline constexpr int heartbeat_interval = 1600;
+	// 心跳超时时间，单位为ms
+	inline constexpr int heartbeat_timeout = 3000;
 } 
 
 #endif // UDS_DF_H

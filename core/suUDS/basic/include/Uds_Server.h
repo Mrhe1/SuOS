@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <functional>
 #include <mutex>
+#include <map>
 
 // 假设该头文件定义了错误码枚举，如 connection_refused, conncet_timed_out 等
 #include <Uds_Error_type.h>
