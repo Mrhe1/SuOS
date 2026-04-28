@@ -1,4 +1,0 @@
-/home/hss/SuOS/build/CMakeFiles/edit_cache.dir
-/home/hss/SuOS/build/CMakeFiles/SuOS.dir
-/home/hss/SuOS/build/CMakeFiles/rebuild_cache.dir
-/home/hss/SuOS/build/CMakeFiles/suUDS_basic.dir
