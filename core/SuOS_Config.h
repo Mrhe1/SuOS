@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SUOS_CONFIG_H
 #define SUOS_CONFIG_H
 

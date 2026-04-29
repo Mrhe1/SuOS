@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef UDS_CLIENTMGR_ERRORCODE_H
 #define UDS_CLIENTMGR_ERRORCODE_H
 

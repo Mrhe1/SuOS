@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef UDS_MSG_BUILDER_HPP
 #define UDS_MSG_BUILDER_HPP
 

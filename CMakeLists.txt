@@ -55,6 +55,7 @@ add_executable(SuOS
     # 将头文件显式列出，有助于部分 IDE/插件 建立索引
     "${UDS_MGR_DIR}/Uds_Client_heartbeat.hpp"
     "${UDS_MGR_DIR}/Uds_ClientMgr.hpp"
+    core/SysService/stopCause.h
 )
 
 target_link_libraries(SuOS PRIVATE

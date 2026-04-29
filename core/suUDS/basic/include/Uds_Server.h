@@ -1,3 +1,5 @@
+#pragma once
+
 #include <boost/asio.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 #include <iostream>

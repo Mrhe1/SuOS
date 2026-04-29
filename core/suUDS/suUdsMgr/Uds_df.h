@@ -1,5 +1,4 @@
-#ifndef UDS_DF_H
-#define UDS_DF_H
+#pragma once
 
 #include <string>
 #include <string_view>
@@ -17,5 +16,3 @@ namespace SuOS::Uds::Df {
 	// 心跳超时时间，单位为ms
 	inline constexpr int heartbeat_timeout = 3000;
 } 
-
-#endif // UDS_DF_H

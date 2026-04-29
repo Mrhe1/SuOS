@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef SU_DbError_H
 #define SU_DbError_H
 

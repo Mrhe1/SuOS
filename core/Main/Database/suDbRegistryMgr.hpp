@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SU_DATABASE_HPP
 #define SU_DATABASE_HPP
 
@@ -9,12 +10,12 @@
 #include <boost/multi_index/member.hpp>
 
 #include "yaml-cpp/yaml.h"
-#include "nlohmann/json.hpp"
+//#include "nlohmann/json.hpp"
 #include "Datastruct.h"
 #include "suDbError.h"
 
 using namespace boost::multi_index;
-using json = nlohmann::json;
+//using json = nlohmann::json;
 
 namespace SuOS::Database {
     class RegistryManager {

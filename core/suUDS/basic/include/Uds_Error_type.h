@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef UDS_ERROR_TYPE_H
 #define UDS_ERROR_TYPE_H
 

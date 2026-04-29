@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SU_RUNTIME_HPP
 #define SU_RUNTIME_HPP
 

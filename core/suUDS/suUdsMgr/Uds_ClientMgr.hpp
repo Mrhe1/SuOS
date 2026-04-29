@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Uds_ClientState.hpp"
 #include "Uds_Client.h"
 #include "Uds_ClientMgr_ErrorCode.h"
