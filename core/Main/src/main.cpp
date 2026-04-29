@@ -4,14 +4,18 @@
 void SuOS::main::Main::run() {
     // 加载数据库
     _db->loadAll(std::string(SuOS::Config::configPath::config));
+
     // 确定启动列表(用于检查系统服务是否都启动了)
+    auto start_vector = _db->getUsrByGroup(std::string(SuOS::Config::usrGroup::core));
     std::list<int> start_list;
-    
+    for (auto& item : start_vector) {
+        // 获取id
+        start_list.push_back(item.id);
+    }
+
+    // 启动router
 }
 
-void SuOS::main::Main::stop() {
-
-}
 
 
 

@@ -32,6 +32,11 @@ namespace SuOS {
             constexpr std::string_view ROUTER = "";
         }
 
+        namespace usrGroup {
+            constexpr std::string_view core = "core";
+            constexpr std::string_view special = "special";
+        }
+
         // === Part IDs (组件/服务注册 ID) ===
         namespace Part {
             constexpr uint32_t ALL = 10000;

@@ -35,21 +35,22 @@ namespace SuOS::Uds::Msg {
             LockGuard& operator=(const LockGuard&) = delete;
         }; 
 
-        MessageBuilder(uint32_t sender_usr, std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _sender_usr(sender_usr), _runtime(runtime) {}
+        // sender_usr可以在每次发送消息时指定
+        MessageBuilder(std::shared_ptr<SuOS::Runtime::suRuntime> runtime, uint32_t sender_usr = 0) : _sender_usr(sender_usr), _runtime(runtime) {}
 
         virtual ~MessageBuilder() = default;
 
         // 构造消息
         LockGuard finalizeEnvelope(uint32_t sender_part, uint32_t receiver_usr,
-            uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload) {
-            //_mutex.lock();
+            uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload, uint32_t sender_usr = 0) {
+            if (sender_usr == 0) sender_usr = _sender_usr;
             // 检查是否在事件循环中
             if(!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
             
             fbb_.Clear();
             auto payload_vec = fbb_.CreateVector(sub_payload);
             auto root = SuOS::Uds::Msg::CreateMessageEnvelope
-            (fbb_, _sender_usr, sender_part, receiver_usr, receiver_part, cmd_id, payload_vec);
+            (fbb_, sender_usr, sender_part, receiver_usr, receiver_part, cmd_id, payload_vec);
             fbb_.Finish(root);
             return LockGuard(fbb_);
         }

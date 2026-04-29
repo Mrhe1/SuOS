@@ -15,5 +15,6 @@ CompileFlags:
     - "-I/home/hss/SuOS/core/Main/include"
     - "-I/home/hss/SuOS/core/SysService"
     - "-I/home/hss/SuOS/core/Main/Database"
+    - "-I/home/hss/SuOS/core/Router"
   
   CompilationDatabase: "build"

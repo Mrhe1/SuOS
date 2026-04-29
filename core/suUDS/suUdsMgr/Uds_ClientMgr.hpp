@@ -26,7 +26,7 @@ namespace SuOS::Uds::ClientMgr {
 		using onError = std::function<void(uint32_t error_type, std::string message)>;
 		using onMsg = std::function<void(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload)>;
 		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime, onError onError, onMsg onMsg, onConnected onConnected) : _client(nullptr), _my_id(my_id), 
-			_builder(_my_id, runtime), _parser(runtime), _runtime(runtime), _onError(onError), _onMsg(onMsg), _onConnected(onConnected),
+			_builder(runtime, _my_id), _parser(runtime), _runtime(runtime), _onError(onError), _onMsg(onMsg), _onConnected(onConnected),
 			_heartbeat(_runtime, [this](uint32_t sender_part, uint32_t receiver_usr,
             uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload) {
 			this->sendmsg(sender_part, receiver_usr, receiver_part, cmd_id, sub_payload);
