@@ -10,7 +10,7 @@
 /// <warning> ///////////////////////////////////////
 /// 仅限单线程调用///////////////////////////////////
 /// </warning> //////////////////////////////////////
-namespace SuOS::Uds::MsgBuilder {
+namespace SuOS::Uds::Msg {
     class MessageBuilder {
     public:
         // 定义一个内部类作为“资源锁句柄”

@@ -22,20 +22,21 @@
 namespace SuOS::Uds::ClientMgr {
 	class ClientManager {
 	public:
+	    using onConnected = std::function<void()>;
 		using onError = std::function<void(uint32_t error_type, std::string message)>;
 		using onMsg = std::function<void(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload)>;
-		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime, onError onError, onMsg onMsg) : _client(nullptr), _my_id(my_id), 
-		_builder(_my_id, runtime), _parser(runtime), _runtime(runtime), _onError(onError), _onMsg(onMsg), 
-		_heartbeat(_runtime, [this](uint32_t sender_part, uint32_t receiver_usr,
+		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime, onError onError, onMsg onMsg, onConnected onConnected) : _client(nullptr), _my_id(my_id), 
+			_builder(_my_id, runtime), _parser(runtime), _runtime(runtime), _onError(onError), _onMsg(onMsg), _onConnected(onConnected),
+			_heartbeat(_runtime, [this](uint32_t sender_part, uint32_t receiver_usr,
             uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload) {
 			this->sendmsg(sender_part, receiver_usr, receiver_part, cmd_id, sub_payload);
-		}, [this]() {
-			// 心跳超时
-			this->handleError(SuOS::Uds::ClientMgr::Errorcode::HeartbeatTimeout, "heartbeat timeout");
-		}) {
-			//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////// client 回调实现////////////////////////////////////////
-		/////////////////////////////////////////////////
+			}, [this]() {
+				// 心跳超时
+				this->handleError(SuOS::Uds::ClientMgr::Errorcode::HeartbeatTimeout, "heartbeat timeout");
+			}) {
+				//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////// client 回调实现////////////////////////////////////////
+			/////////////////////////////////////////////////
 			_onUdsMsgCb = [this](const uint32_t cid, const std::vector<char>& data) {
 				// 1. 安全检查：确保数据不为空
 				if (data.empty()) {
@@ -86,24 +87,24 @@ namespace SuOS::Uds::ClientMgr {
 			_onUdsError = [this](const uint32_t cid, uint32_t error_type, std::string message) {
 				uint32_t client_error;
 
-				// 建立从 SuOS::UdsError 到 SuOS::Uds::ClientMgr::Errorcode 的转换逻辑
+				// 建立从 SuOS::Uds::Errorcode 到 SuOS::Uds::ClientMgr::Errorcode 的转换逻辑
 				switch (error_type) {
-				case SuOS::UdsError::ConnectionRefused:
+				case SuOS::Uds::Errorcode::ConnectionRefused:
 					client_error = SuOS::Uds::ClientMgr::Errorcode::UdsBadEroor;
 					break;
 
-				case SuOS::UdsError::NoSuchFileOrDirectory:
+				case SuOS::Uds::Errorcode::NoSuchFileOrDirectory:
 					client_error = SuOS::Uds::ClientMgr::Errorcode::NoSuchFileOrDirectory;
 					break;
 
-				case SuOS::UdsError::ConnectTimedOut:
+				case SuOS::Uds::Errorcode::ConnectTimedOut:
 					// 实际在handleerror中不会处理此错误，因为会多次连接
 					client_error = SuOS::Uds::ClientMgr::Errorcode::UdsClientOK;
 					break;
 
-				case SuOS::UdsError::ConnectionClosed:
-				case SuOS::UdsError::AddressInUse:
-				case SuOS::UdsError::NoDescriptors:
+				case SuOS::Uds::Errorcode::ConnectionClosed:
+				case SuOS::Uds::Errorcode::AddressInUse:
+				case SuOS::Uds::Errorcode::NoDescriptors:
 					client_error = SuOS::Uds::ClientMgr::Errorcode::UdsBadEroor;
 					break;
 
@@ -122,10 +123,10 @@ namespace SuOS::Uds::ClientMgr {
 
 		uint32_t Start() {
 			if(!_runtime->isInEventLoop()) return Uds::ClientMgr::outputErrorCode::NotInEventLoop;
-			if (_stateMgr.getState() != SuOS::Uds::ClientState::State::Idle) {
+			if (_stateMgr.getState() != SuOS::Uds::ClientMgr::State::Idle) {
 				return Uds::ClientMgr::outputErrorCode::StateError;
 			}
-            _stateMgr.setState(SuOS::Uds::ClientState::State::Starting);
+            _stateMgr.setState(SuOS::Uds::ClientMgr::State::Starting);
 			// connect等待回报
 			connect();
 			return Uds::ClientMgr::outputErrorCode::UdsClientOK;
@@ -135,11 +136,11 @@ namespace SuOS::Uds::ClientMgr {
 			if(!_runtime->isInEventLoop()) return Uds::ClientMgr::outputErrorCode::NotInEventLoop;
 			
 			// 1. 状态锁定，防止重入
-			if (_stateMgr.getState() == SuOS::Uds::ClientState::State::Idle || 
-				_stateMgr.getState() == SuOS::Uds::ClientState::State::Stopping) {
+			if (_stateMgr.getState() == SuOS::Uds::ClientMgr::State::Idle || 
+				_stateMgr.getState() == SuOS::Uds::ClientMgr::State::Stopping) {
 				return Uds::ClientMgr::outputErrorCode::StateError;
 			}
-			_stateMgr.setState(SuOS::Uds::ClientState::State::Stopping);
+			_stateMgr.setState(SuOS::Uds::ClientMgr::State::Stopping);
 
 			// 2. 停止异步触发源 (关键！)
 			_heartbeat.stop();        // 停止心跳定时器
@@ -152,7 +153,7 @@ namespace SuOS::Uds::ClientMgr {
 			disconnect(); // 内部会调用 _client->disconnect() 并置空 _client
 
 			// 4. 重置状态
-			_stateMgr.setState(SuOS::Uds::ClientState::State::Idle);
+			_stateMgr.setState(SuOS::Uds::ClientMgr::State::Idle);
 			return Uds::ClientMgr::outputErrorCode::UdsClientOK;
 		}
 
@@ -188,7 +189,7 @@ namespace SuOS::Uds::ClientMgr {
 			if (_runtime) {
 				_connect_task = _runtime->scheduleAtFixedRate(100, (_client_connect_dur + 1) * 1000,
 					[this]() {
-						_client = std::make_shared<SuOS::Uds::Client::Uds_Client>(_runtime->getIoContext(),_cid , _uds_path, _onUdsMsgCb, _onUdsError, _onUdsConted);
+						_client = std::make_shared<SuOS::Uds::basic::Uds_Client>(_runtime->getIoContext(),_cid , _uds_path, _onUdsMsgCb, _onUdsError, _onUdsConted);
 						_client->connect_to_server(_client_connect_dur);
 					}, false, _client_connect_times, [this]() {
 						// 超时回调// 由onConnectResult处理
@@ -244,7 +245,7 @@ namespace SuOS::Uds::ClientMgr {
 			if (connected) {
 				if (is_certificated) {
 					std::cout << "重新连接成功" << std::endl;
-					_stateMgr.setState(SuOS::Uds::ClientState::State::Working);
+					_stateMgr.setState(SuOS::Uds::ClientMgr::State::Working);
 				}
 				else {
 					std::cout << "重新连接认证失败" << std::endl;
@@ -262,7 +263,7 @@ namespace SuOS::Uds::ClientMgr {
 			if (connected) {
 				if (is_certificated) {
 					std::cout << "首次连接成功" << std::endl;
-					_stateMgr.setState(SuOS::Uds::ClientState::State::Working);
+					_stateMgr.setState(SuOS::Uds::ClientMgr::State::Working);
 				} else {
 					std::cout << "首次连接认证失败" << std::endl;
 					handleError(SuOS::Uds::ClientMgr::Errorcode::CertificationError, "CertificationError");
@@ -286,9 +287,9 @@ namespace SuOS::Uds::ClientMgr {
 				if(is_certificated) _heartbeat.start();
 			}
 			_connect_task = nullptr;
-			if (_stateMgr.getState() == SuOS::Uds::ClientState::State::Reconnecting) {
+			if (_stateMgr.getState() == SuOS::Uds::ClientMgr::State::Reconnecting) {
 				onReconnectingReslut(connected, is_certificated);
-			} else if (_stateMgr.getState() == SuOS::Uds::ClientState::State::Starting) {
+			} else if (_stateMgr.getState() == SuOS::Uds::ClientMgr::State::Starting) {
 				onFirconnectingReslut(connected, is_certificated);
 			}			
 		}
@@ -298,25 +299,29 @@ namespace SuOS::Uds::ClientMgr {
 
 		void handleError(uint32_t error_code, std::string msg) {
 			auto cur_state = _stateMgr.getState();
-			if (cur_state == SuOS::Uds::ClientState::State::Dead || cur_state == SuOS::Uds::ClientState::State::Error
+			if (cur_state == SuOS::Uds::ClientMgr::State::Dead || cur_state == SuOS::Uds::ClientMgr::State::Error
 				|| error_code == SuOS::Uds::ClientMgr::Errorcode::UdsClientOK) {
                return;
 			}
 
-			_stateMgr.setState(SuOS::Uds::ClientState::State::Error);
+			_stateMgr.setState(SuOS::Uds::ClientMgr::State::Error);
 
 			// start阶段忽略UdsBadEroor，以多次连接最终结果为准
-			if (cur_state == SuOS::Uds::ClientState::State::Starting || cur_state == SuOS::Uds::ClientState::State::Reconnecting)
+			if (cur_state == SuOS::Uds::ClientMgr::State::Starting || cur_state == SuOS::Uds::ClientMgr::State::Reconnecting)
 			{
 				if (error_code == SuOS::Uds::ClientMgr::Errorcode::ConnectionTimeOut || 
 					error_code == SuOS::Uds::ClientMgr::Errorcode::CertificationError ||
 					error_code == SuOS::Uds::ClientMgr::Errorcode::NoSuchFileOrDirectory) {
 					//致命错误//报告错误
-					_stateMgr.setState(SuOS::Uds::ClientState::State::Dead);
+					_stateMgr.setState(SuOS::Uds::ClientMgr::State::Dead);
 					uint32_t out_error_code = [&]() -> uint32_t {
 						switch(error_code) {
-						case SuOS::Uds::ClientMgr::Errorcode::ConnectionTimeOut:
+						case SuOS::Uds::ClientMgr::Errorcode::ConnectionTimeOut :
+						    if (cur_state == SuOS::Uds::ClientMgr::State::Starting) {
 							return SuOS::Uds::ClientMgr::outputErrorCode::ConnectionTimeOut;
+							} else if (cur_state == SuOS::Uds::ClientMgr::State::Reconnecting) {
+								return SuOS::Uds::ClientMgr::outputErrorCode::ReconnectFail;
+							}
 						case SuOS::Uds::ClientMgr::Errorcode::CertificationError:
 							return SuOS::Uds::ClientMgr::outputErrorCode::CertificationError;
 						case SuOS::Uds::ClientMgr::Errorcode::NoSuchFileOrDirectory:
@@ -331,41 +336,42 @@ namespace SuOS::Uds::ClientMgr {
 				}
 			}
 
-			if (cur_state == SuOS::Uds::ClientState::State::Working) {
+			if (cur_state == SuOS::Uds::ClientMgr::State::Working) {
 				if (error_code == SuOS::Uds::ClientMgr::Errorcode::UdsBadEroor || error_code == SuOS::Uds::ClientMgr::Errorcode::HeartbeatTimeout) {
 					// 重连
 					_heartbeat.stop();
-					_stateMgr.setState(SuOS::Uds::ClientState::State::Reconnecting);
+					_stateMgr.setState(SuOS::Uds::ClientMgr::State::Reconnecting);
 					disconnect();
 					connect();
 				}
 				if (error_code == SuOS::Uds::ClientMgr::Errorcode::NoSuchFileOrDirectory) {
 					//致命错误//报告错误
 					_heartbeat.stop();
-					_stateMgr.setState(SuOS::Uds::ClientState::State::Dead);
+					_stateMgr.setState(SuOS::Uds::ClientMgr::State::Dead);
 					_onError(SuOS::Uds::ClientMgr::outputErrorCode::NoSuchFileOrDirectory, msg);
 				}
 			}
 
 			// 如果错误未得到处理->忽略错误
-			if(_stateMgr.getState() == SuOS::Uds::ClientState::State::Error) {
+			if(_stateMgr.getState() == SuOS::Uds::ClientMgr::State::Error) {
 				_stateMgr.setState(cur_state);
 			}
 		}
 		
 		onError _onError;
 		onMsg _onMsg;
+		onConnected _onConnected;
 		SuOS::Uds::ClientMgr::Uds_Client_heartbeat _heartbeat;
-		SuOS::Uds::ClientState::ClientStateManager _stateMgr;
-		std::shared_ptr<SuOS::Uds::Client::Uds_Client> _client = nullptr;
-		SuOS::Uds::MsgBuilder::MessageBuilder _builder;
-        SuOS::Uds::MsgParser::MessageParser _parser;
+		SuOS::Uds::ClientMgr::ClientMgrManager _stateMgr;
+		std::shared_ptr<SuOS::Uds::basic::Uds_Client> _client = nullptr;
+		SuOS::Uds::Msg::MessageBuilder _builder;
+        SuOS::Uds::Msg::MessageParser _parser;
 		std::shared_ptr<SuOS::Runtime::suRuntime> _runtime;
 		std::shared_ptr<SuOS::Runtime::suRuntime::ScheduledTask> _connect_task;
 		// 自动配置cid（client——id）
 		const int _cid = 1001;
-		const int _client_connect_times = SuOS::Uds::Df::client_connect_times;
-		const int _client_connect_dur = SuOS::Uds::Df::client_connect_dur;
+		const int _client_connect_times = SuOS::Uds::ClientMgr::Df::client_connect_times;
+		const int _client_connect_dur = SuOS::Uds::ClientMgr::Df::client_connect_dur;
 		const uint32_t _router_id = SuOS::Config::Usr::ROUTER;
 		const uint32_t _router_part = SuOS::Config::Part::ROUTER;
 		const uint32_t _router_uid = SuOS::Config::uid::ROUTER;
@@ -373,7 +379,7 @@ namespace SuOS::Uds::ClientMgr {
 		const uint32_t _heartbeat_id = SuOS::Config::CommandId::heartbeat_id;
 		// 自身usr_id
 		const uint32_t _my_id;
-		const std::string _uds_path = std::string(SuOS::Uds::Df::uds_path);
-		const std::string _router_path = std::string(SuOS::Uds::Df::router_path);
+		const std::string _uds_path = std::string(SuOS::Uds::ClientMgr::Df::uds_path);
+		const std::string _router_path = std::string(SuOS::Uds::ClientMgr::Df::router_path);
 	};
 }

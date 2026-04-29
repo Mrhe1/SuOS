@@ -12,7 +12,7 @@
 // 错误码定义
 #include "Uds_Error_type.h"
 
-namespace SuOS::Uds::Client { 
+namespace SuOS::Uds::basic { 
 
     class Uds_Client : public std::enable_shared_from_this<Uds_Client> {
     public:

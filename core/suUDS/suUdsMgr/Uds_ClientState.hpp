@@ -2,7 +2,7 @@
 
 #include <mutex>
 
-namespace SuOS::Uds::ClientState { 
+namespace SuOS::Uds::ClientMgr { 
 	enum class State {
 		Idle,
 		Starting,
@@ -13,9 +13,9 @@ namespace SuOS::Uds::ClientState {
 		Error
 	};
 
-	class ClientStateManager {
+	class ClientMgrManager {
 	public:
-		ClientStateManager() : _state(State::Idle) {}
+		ClientMgrManager() : _state(State::Idle) {}
 
 		void setState(State newState) {
 			std::lock_guard<std::mutex> lock(_mutex);
@@ -31,4 +31,4 @@ namespace SuOS::Uds::ClientState {
 		State _state;
 		std::mutex _mutex;
 	};
-} // namespace SuOS::Uds::ClientState
+} // namespace SuOS::Uds::ClientMgr

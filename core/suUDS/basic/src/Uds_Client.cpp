@@ -12,11 +12,11 @@
 
 using namespace boost::asio;
 using namespace boost::asio::local;
-using namespace SuOS::Uds::Client;
+using namespace SuOS::Uds::basic;
 //using namespace boost::system::error_code
 // 设计一次性使用，不要重复连接
 
-namespace SuOS::Uds::Client {
+namespace SuOS::Uds::basic {
     Uds_Client::Uds_Client(io_context& ioc, const uint32_t cid, const std::string path, MessageCallback cb, onError onEr,onConnected oncted)
         : socket_(ioc), cid_(cid), timer_(ioc), path_(path),
         on_msg_(cb), on_error_(onEr), on_connected_(oncted) {
@@ -39,7 +39,7 @@ namespace SuOS::Uds::Client {
             if (!ec) {
                 std::cerr << "[" << cid_ << "] uds Connection timed out。" << std::endl;
                 socket_.close();
-                on_error_(cid_, SuOS::UdsError::ConnectTimedOut, "Connection timed out");
+                on_error_(cid_, SuOS::Uds::Errorcode::ConnectTimedOut, "Connection timed out");
             }
             });
 
@@ -160,10 +160,10 @@ namespace SuOS::Uds::Client {
 
         uint32_t type = 0;
         // 映射逻辑与 Server 端保持一致
-        if (ec == boost::asio::error::connection_refused) type = SuOS::UdsError::ConnectionRefused;
-        else if (ec == boost::system::errc::no_such_file_or_directory) type = SuOS::UdsError::NoSuchFileOrDirectory;
-        else if (ec == boost::asio::error::broken_pipe) type = SuOS::UdsError::ConnectionClosed;
-        else if (ec == boost::asio::error::timed_out) type = SuOS::UdsError::ConnectTimedOut;
+        if (ec == boost::asio::error::connection_refused) type = SuOS::Uds::Errorcode::ConnectionRefused;
+        else if (ec == boost::system::errc::no_such_file_or_directory) type = SuOS::Uds::Errorcode::NoSuchFileOrDirectory;
+        else if (ec == boost::asio::error::broken_pipe) type = SuOS::Uds::Errorcode::ConnectionClosed;
+        else if (ec == boost::asio::error::timed_out) type = SuOS::Uds::Errorcode::ConnectTimedOut;
         else if (ec == boost::asio::error::operation_aborted || ec == boost::asio::error::eof) {
             return; // 正常取消，不触发回调
         }

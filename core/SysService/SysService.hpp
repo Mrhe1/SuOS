@@ -1,6 +1,8 @@
 #pragma once
 #include "Uds_ClientMgr.hpp"
 #include "suRuntime.hpp"
+#include "sysService_df.h"
+#include "SuOS_Config.h"
 #include <memory>
 #include <string>
 
@@ -8,8 +10,8 @@ namespace SuOS::Service {
 
     class SysService : public std::enable_shared_from_this<SysService> {
     public:
-        SysService(int service_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime)
-            : _service_id(service_id), _runtime(runtime) {}
+        SysService(int myusr_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime)
+            : _myusr_id(myusr_id), _runtime(runtime) {}
 
         virtual ~SysService() = default;
 
@@ -26,11 +28,11 @@ namespace SuOS::Service {
         }
 
         // 【主动停止】
-        void stop() {
+        void stop(uint32_t cause) {
             if (_clientMgr) {
                 _clientMgr->Stop();
             }
-            onStop();
+            onStop(cause);
         }
 
     protected:
@@ -62,37 +64,45 @@ namespace SuOS::Service {
             // 构造 ClientManager
             // 假设 ClientManager 内部在连接成功后会有回调
             _clientMgr = std::make_shared<SuOS::Uds::ClientMgr::ClientManager>(
-                _service_id, 
+                _myusr_id, 
                 _runtime,
                 [this](uint32_t err, std::string msg) { handleInternalError(err, msg); },
                 [this](uint32_t s_usr, uint32_t s_part, uint32_t r_part, uint32_t cmd, const std::vector<uint8_t>& p) {
-                    // 核心分发：在此处可以统一处理系统级指令（如心跳、PING等）
+                    // 处理进程控制指令
+                    if (r_part == SuOS::Config::Part::Usr_Control) {
+                        if (cmd == SuOS::Config::CommandId::usr_stop_request) {
+                            // 停止// 正常停止
+                            stop(SuOS::Service::Df::stopCause::normal);
+                        }
+                        if (cmd == SuOS::Config::CommandId::usr_stop_kill) {
+                            // 强制停止
+                            stop(SuOS::Service::Df::stopCause::force);
+                        }
+                        return;
+                    }
                     // 业务消息丢给子类
                     onMessage(s_usr, s_part, r_part, cmd, p);
+                },
+                [this]() {
+                    _runtime->dispatch([this]() {
+                        // 触发 onConnect
+                        onConnect();
+                    });
                 }
             );
-
-            // 监听连接状态以触发 onConnect
-            // 注意：这里需要 ClientMgr 暴露一个连接成功的 Hook，或者在内部状态切换到 Working 时触发
-            // 假设我们修改 ClientMgr 增加一个 onConnected 回调：
-            _clientMgr->setOnConnectedHook([this]() {
-                onConnect();
-            });
-
             _clientMgr->Start();
         }
 
         void handleInternalError(uint32_t error_type, std::string msg) {
-            // 统一错误处理，如果是断开连接，可能需要触发 onStop
-            if (error_type == SuOS::Uds::ClientMgr::outputErrorCode::ReconnectFail) {
-                stop();
+            // 统一错误处理触发 onStop
+            if (error_type != SuOS::Uds::ClientMgr::outputErrorCode::UdsClientOK) {
+                stop(SuOS::Service::Df::stopCause::uds_error);
             }
         }
 
     protected:
-        int _service_id;
+        int _myusr_id;
         std::shared_ptr<SuOS::Runtime::suRuntime> _runtime;
         std::shared_ptr<SuOS::Uds::ClientMgr::ClientManager> _clientMgr;
     };
-
 } // namespace SuOS::Service

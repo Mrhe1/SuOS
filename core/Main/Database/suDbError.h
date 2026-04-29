@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace SuOS { 
+namespace SuOS::Database { 
     namespace DbError {
         // 使用 inline constexpr 是 C++17 及以后最推荐的做法
         inline constexpr uint32_t Success = 0x01;

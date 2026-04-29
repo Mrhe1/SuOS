@@ -13,5 +13,7 @@ CompileFlags:
     - "-I/home/hss/SuOS/core/suUDS/basic/include"
     - "-I/home/hss/SuOS/core/suRuntime/include"
     - "-I/home/hss/SuOS/core/Main/include"
+    - "-I/home/hss/SuOS/core/SysService"
+    - "-I/home/hss/SuOS/core/Main/Database"
   
   CompilationDatabase: "build"

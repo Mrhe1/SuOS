@@ -10,7 +10,7 @@
 /// <warning> ///////////////////////////////////////
 /// 仅限单线程调用///////////////////////////////////
 /// </warning> //////////////////////////////////////
-namespace SuOS::Uds::MsgParser {
+namespace SuOS::Uds::Msg {
     class MessageParser {
     public:
         class LockGuard {
@@ -64,6 +64,6 @@ namespace SuOS::Uds::MsgParser {
         //std::mutex _mutex;
         //std::mutex _dummy_mutex; // 用于校验失败时的占位
     };
-} // namespace SuOS::Uds::MsgParser
+} // namespace SuOS::Uds::Msg
 
 #endif // UDS_MSG_PARSER_HPP

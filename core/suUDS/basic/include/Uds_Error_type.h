@@ -6,7 +6,7 @@
 #include <cstdint>
 
 namespace SuOS {
-    namespace UdsError { 
+    namespace Uds::Errorcode { 
         // 使用 inline constexpr 是 C++17 及以后最推荐的做法
         inline constexpr uint32_t ConnectionRefused = 0x01;
         inline constexpr uint32_t NoSuchFileOrDirectory = 0x02;

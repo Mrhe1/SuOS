@@ -20,6 +20,19 @@ using namespace boost::multi_index;
 namespace SuOS::Database {
     class RegistryManager {
     public:
+        RegistryManager() = default;
+        // 禁止外部实例化
+        RegistryManager(const RegistryManager&) = delete;
+        RegistryManager& operator=(const RegistryManager&) = delete;
+
+        // --- 静态全局访问接口 ---
+        
+        // 单例获取
+        static RegistryManager& instance() {
+            static RegistryManager inst;
+            return inst;
+        }
+
         // --- 1. 统一加载方法 ---
         bool loadAll(const std::string& filename) {
             try {
@@ -31,6 +44,12 @@ namespace SuOS::Database {
                 std::cerr << "Load Failed: " << e.what() << std::endl;
                 return false;
             }
+        }
+
+        void unloadAll() {
+            usrReg.clear();
+            partReg.clear();
+            appReg.clear();
         }
 
         // --- 2. 用户查询 (按 ID) ---

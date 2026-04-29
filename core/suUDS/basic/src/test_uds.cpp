@@ -11,7 +11,7 @@
 
 using namespace std::chrono_literals;
 using namespace SuOS::Uds::Server;
-using namespace SuOS::Uds::Client;
+using namespace SuOS::Uds::basic;
 
 const std::string SOCKET_PATH = "/tmp/uds_test.sock";
 

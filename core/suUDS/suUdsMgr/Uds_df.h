@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace SuOS::Uds::Df {
+namespace SuOS::Uds::ClientMgr::Df {
 	// 客户端尝试连接最大次数
 	inline constexpr int client_connect_times = 3;
 	// 客户端单次连接间隔时间，单位为ms

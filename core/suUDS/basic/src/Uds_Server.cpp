@@ -106,22 +106,22 @@ namespace SuOS::Uds::Server {
 
             // 映射 boost 错误到 Uds_Error_type.h
             if (ec == boost::asio::error::connection_refused) {
-                type = SuOS::UdsError::ConnectionRefused;
+                type = SuOS::Uds::Errorcode::ConnectionRefused;
             }
             else if (ec == boost::system::errc::no_such_file_or_directory) {
-                type = SuOS::UdsError::NoSuchFileOrDirectory;
+                type = SuOS::Uds::Errorcode::NoSuchFileOrDirectory;
             }
             else if (ec == boost::asio::error::address_in_use) {
-                type = SuOS::UdsError::AddressInUse;
+                type = SuOS::Uds::Errorcode::AddressInUse;
             }
             else if (ec == boost::asio::error::broken_pipe) {
-                type = SuOS::UdsError::ConnectionClosed;
+                type = SuOS::Uds::Errorcode::ConnectionClosed;
             }
             else if (ec == boost::asio::error::no_descriptors) {
-                type = SuOS::UdsError::NoDescriptors;
+                type = SuOS::Uds::Errorcode::NoDescriptors;
             }
             else if (ec == boost::asio::error::timed_out) {
-                type = SuOS::UdsError::ConnectTimedOut;
+                type = SuOS::Uds::Errorcode::ConnectTimedOut;
             }
             else if (ec == boost::asio::error::operation_aborted || ec == boost::asio::error::eof) {
                 return; // 正常取消，不触发回调
@@ -282,16 +282,16 @@ namespace SuOS::Uds::Server {
                 return; // 忽略错误，因为已经不存在了
             }
             
-            if (error_type == SuOS::UdsError::ConnectionClosed ||
-                error_type == SuOS::UdsError::ConnectTimedOut) {
+            if (error_type == SuOS::Uds::Errorcode::ConnectionClosed ||
+                error_type == SuOS::Uds::Errorcode::ConnectTimedOut) {
                 session_to_stop = it->second; // 拷贝指针，增加引用计数
                 sessions_.erase(it);          // 从 map 移除，此时还不会析构
             }
         }
 
         // 在锁外执行资源释放，避免 lock 状态下调用 handle_error 产生潜在死锁
-        if (session_to_stop && (error_type == SuOS::UdsError::ConnectionClosed ||
-            error_type == SuOS::UdsError::ConnectTimedOut)) {
+        if (session_to_stop && (error_type == SuOS::Uds::Errorcode::ConnectionClosed ||
+            error_type == SuOS::Uds::Errorcode::ConnectTimedOut)) {
             session_to_stop->close();
         }
 
@@ -306,22 +306,22 @@ namespace SuOS::Uds::Server {
 
         // 映射 boost 错误到 Uds_Error_type.h
         if (ec == boost::asio::error::connection_refused) {
-            type = SuOS::UdsError::ConnectionRefused;
+            type = SuOS::Uds::Errorcode::ConnectionRefused;
         }
         else if (ec == boost::system::errc::no_such_file_or_directory) {
-            type = SuOS::UdsError::NoSuchFileOrDirectory;
+            type = SuOS::Uds::Errorcode::NoSuchFileOrDirectory;
         }
         else if (ec == boost::asio::error::address_in_use) {
-            type = SuOS::UdsError::AddressInUse;
+            type = SuOS::Uds::Errorcode::AddressInUse;
         }
         else if (ec == boost::asio::error::broken_pipe) {
-            type = SuOS::UdsError::ConnectionClosed;
+            type = SuOS::Uds::Errorcode::ConnectionClosed;
         }
         else if (ec == boost::asio::error::no_descriptors) {
-            type = SuOS::UdsError::NoDescriptors;
+            type = SuOS::Uds::Errorcode::NoDescriptors;
         }
         else if (ec == boost::asio::error::timed_out) {
-            type = SuOS::UdsError::ConnectTimedOut;
+            type = SuOS::Uds::Errorcode::ConnectTimedOut;
         }
         else if (ec == boost::asio::error::operation_aborted || ec == boost::asio::error::eof) {
             return; // 正常取消，不触发回调
@@ -334,9 +334,9 @@ namespace SuOS::Uds::Server {
     void Uds_Server::handle_error(const uint32_t cid, uint32_t error_type, std::string message) {
         if (on_error_) on_error_(cid, error_type, message);
 
-        if (error_type == SuOS::UdsError::NoSuchFileOrDirectory ||
-            error_type == SuOS::UdsError::AddressInUse ||
-            error_type == SuOS::UdsError::NoDescriptors) {
+        if (error_type == SuOS::Uds::Errorcode::NoSuchFileOrDirectory ||
+            error_type == SuOS::Uds::Errorcode::AddressInUse ||
+            error_type == SuOS::Uds::Errorcode::NoDescriptors) {
             // 错误类型为文件不存在、地址被占用、描述符不足时，关闭server
             stop();
         }

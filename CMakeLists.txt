@@ -52,10 +52,14 @@ target_include_directories(suRuntime INTERFACE "${RUNTIME_DIR}/include")
 
 add_executable(SuOS
     SuOS.cpp
-    # 将头文件显式列出，有助于部分 IDE/插件 建立索引
-    "${UDS_MGR_DIR}/Uds_Client_heartbeat.hpp"
-    "${UDS_MGR_DIR}/Uds_ClientMgr.hpp"
-    core/SysService/stopCause.h
+    core/Main/src/main.cpp
+)
+
+# 添加包含目录，让编译器能找到头文件
+target_include_directories(SuOS PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/core/SysService"
+    "${CMAKE_CURRENT_SOURCE_DIR}/core/Main/include"
 )
 
 target_link_libraries(SuOS PRIVATE
