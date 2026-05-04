@@ -1,0 +1,45 @@
+namespace SuOS.Uds.Msg.PartExample;
+
+// ---- 子消息类型定义 ----
+table NoArgs { }
+
+table CmdRequest {
+    seq_no: uint32;
+    parameters: [ubyte];
+}
+
+table CmdResponse {
+    seq_no: uint32;
+    result_code: uint32;
+    data: [ubyte];
+}
+
+table EventNotify {
+    event_id: uint32;
+    severity: uint32;
+    detail: [ubyte];
+}
+
+table ErrorResponse {
+    seq_no: uint32;
+    error_code: uint32;
+    error_msg: string;
+}
+
+// ---- Union 定义 ----
+
+union UdsPayload {
+    NoArgs,
+    CmdRequest,
+    CmdResponse,
+    EventNotify,
+    ErrorResponse,
+}
+
+// ---- Union 包装表 ----
+
+table PayloadEnvelope {
+    payload: UdsPayload;
+}
+
+root_type PayloadEnvelope;

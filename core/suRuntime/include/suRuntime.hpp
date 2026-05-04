@@ -7,6 +7,7 @@
 #include <memory>
 #include <functional> 
 #include <chrono>
+#include "flatbuffers/flatbuffers.h"
 
 namespace SuOS::Runtime {
     class suRuntime {
@@ -184,12 +185,24 @@ namespace SuOS::Runtime {
             worker_pool_.join();
         }
 
+        // 添加FlatBufferBuilder支持
+        flatbuffers::FlatBufferBuilder& getFlatBufferBuilder() {
+            return fbb_;
+        }
+
+        void resetFlatBufferBuilder() {
+            fbb_.Clear();
+        }
+
     private:
         boost::asio::io_context io_context_;
         boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard_;
         boost::asio::thread_pool worker_pool_;
         std::thread event_thread_;
         std::thread::id event_thread_id_;
+
+        // 添加FlatBufferBuilder成员
+        flatbuffers::FlatBufferBuilder fbb_{1024};
     };
 }
 #endif // SU_RUNTIME_HPP
