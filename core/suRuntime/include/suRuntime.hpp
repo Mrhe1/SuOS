@@ -185,14 +185,14 @@ namespace SuOS::Runtime {
             worker_pool_.join();
         }
 
-        // 添加FlatBufferBuilder支持
-        flatbuffers::FlatBufferBuilder& getFlatBufferBuilder() {
-            return fbb_;
-        }
+        // // 添加FlatBufferBuilder支持
+        // flatbuffers::FlatBufferBuilder& getFlatBufferBuilder() {
+        //     return fbb_;
+        // }
 
-        void resetFlatBufferBuilder() {
-            fbb_.Clear();
-        }
+        // void resetFlatBufferBuilder() {
+        //     fbb_.Clear();
+        // }
 
     private:
         boost::asio::io_context io_context_;
@@ -202,7 +202,7 @@ namespace SuOS::Runtime {
         std::thread::id event_thread_id_;
 
         // 添加FlatBufferBuilder成员
-        flatbuffers::FlatBufferBuilder fbb_{1024};
+        //flatbuffers::FlatBufferBuilder fbb_{1024};
     };
 }
 #endif // SU_RUNTIME_HPP

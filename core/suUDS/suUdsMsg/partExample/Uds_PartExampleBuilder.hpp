@@ -31,17 +31,6 @@ namespace SuOS::Uds::Msg::PartExample {
         PartExampleBuilder(std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _runtime(runtime) {}
         virtual ~PartExampleBuilder() = default;
 
-        // 构建 PayloadEnvelope (通用)
-        template <typename T>
-        LockGuard finalize(flatbuffers::Offset<T> payload_offset, UdsPayload type) {
-            if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
-
-            fbb_.Clear();
-            auto root = CreatePayloadEnvelope(fbb_, type, payload_offset.Union());
-            fbb_.Finish(root);
-            return LockGuard(fbb_);
-        }
-
         // 构建 NoArgs 消息
         LockGuard BuildNoArgs() {
             if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
