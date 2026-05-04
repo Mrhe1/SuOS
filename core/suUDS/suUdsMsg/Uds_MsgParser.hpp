@@ -28,7 +28,6 @@ namespace SuOS::Uds::Msg {
             uint32_t getSenderPart() const { return _envelope->sender_part(); }
             uint32_t getReceiverUsr() const { return _envelope->receiver_usr(); }
             uint32_t getReceiverPart() const { return _envelope->receiver_part(); }
-            uint32_t getCmdId() const { return _envelope->cmd_id(); }
             const uint8_t* payloadData() const { return _envelope->payload()->data(); }
             size_t payloadSize() const { return _envelope->payload()->size(); }
             

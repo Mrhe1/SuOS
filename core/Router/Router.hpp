@@ -56,17 +56,17 @@ namespace SuOS::Uds::Router {
         // 核心转发接口
         void route_message(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_usr, uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& payload) {
             _runtime->dispatch([this, sender_usr, sender_part, receiver_usr, receiver_part, cmd_id, payload]() {
-                auto guard = _builder.finalizeEnvelope(sender_part, receiver_usr, receiver_part, cmd_id, payload, sender_usr);
+                auto guard = _builder.finalizeEnvelope(sender_part, receiver_usr, receiver_part, payload, sender_usr);
                 std::vector<char> data(guard.data(), guard.data() + guard.size());
                 
-                if (receiver_id == SuOS::Config::Usr::ROUTER) {
+                if (receiver_usr == SuOS::Config::Usr::ROUTER) {
                     // 发给自己的消息（如心跳响应）内部消化
                     if (cmd_id == SuOS::Config::CommandId::heartbeat_id) {
-                        _heartbeat.updateClient(sender_id);
+                        _heartbeat.updateClient(sender_usr);
                     }
                 } else {
                     // 转发给目标 Client
-                    _server->send_async(receiver_id, data);
+                    _server->send_async(receiver_usr, data);
                 }
             });
         }

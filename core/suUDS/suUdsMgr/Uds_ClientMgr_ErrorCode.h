@@ -28,7 +28,7 @@ namespace SuOS::Uds::ClientMgr {
                 // 不在enventloop中调用
                 inline constexpr uint32_t NotInEventLoop = 0x06;
                 inline constexpr uint32_t ConnectionTimeOut = 0x07;
-        }
+        } 
 }
 
 #endif // UDS_CLIENTMGR_ERRORCODE_H

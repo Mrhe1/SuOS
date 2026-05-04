@@ -60,14 +60,22 @@ namespace SuOS::Database {
             return (it != index.end()) ? &(*it) : nullptr;
         }
 
-        // --- 3. 用户查询 (按 Name) ---
+                // --- 3. 用户查询 (按 Name) ---
         const UsrConfig* getUsrByName(const std::string& name) const {
             auto& index = usrReg.get<by_name>();
             auto it = index.find(name);
             return (it != index.end()) ? &(*it) : nullptr;
         }
 
+        // --- 3.1 用户查询 (按 Path) ---
+        const UsrConfig* getUsrByPath(const std::string& path) const {
+            auto& index = usrReg.get<by_path>();
+            auto it = index.find(path);
+            return (it != index.end()) ? &(*it) : nullptr;
+        }
+
         // --- 4. 用户查询 (按 Group) ---
+
         std::vector<UsrConfig> getUsrByGroup(const std::string& group) const {
             //  获取对应的非唯一索引视图
             auto& group_index = usrReg.get<by_group>();
@@ -136,11 +144,26 @@ namespace SuOS::Database {
             return result;
         }
 
-        // --- 6. 插入新 App ---
+                // --- 6. 插入新 App ---
         bool addApp(const APPConfig& app) {
             auto res = appReg.insert(app);
             return res.second; // 返回是否插入成功（如果 ID 或 Name 已存在会失败）
         }
+
+        // --- 7. App查询 (按 ID) ---
+        const APPConfig* getAppById(int id) const {
+            auto& index = appReg.get<by_id>();
+            auto it = index.find(id);
+            return (it != index.end()) ? &(*it) : nullptr;
+        }
+
+        // --- 8. App查询 (按 Path) ---
+        const APPConfig* getAppByPath(const std::string& path) const {
+            auto& index = appReg.get<by_path>();
+            auto it = index.find(path);
+            return (it != index.end()) ? &(*it) : nullptr;
+        }
+
 
 
 
@@ -161,8 +184,9 @@ namespace SuOS::Database {
                     usr.id = item["id"].as<int>();
                     usr.name = item["name"].as<std::string>();
                     usr.group = item["group"].as<std::string>();
-                    usr.acl = item["acl"].as<std::string>();
+                                        usr.acl = item["acl"].as<std::string>();
                     usr.status = item["status"].as<std::string>();
+                    usr.path = item["path"] ? item["path"].as<std::string>() : "";
 
                     // 处理固定大小数组 int[3]
                     if (item["linux_id"].IsSequence() && item["linux_id"].size() == 3) {
@@ -194,8 +218,9 @@ namespace SuOS::Database {
                 for (const auto& item : config["apps"]) {
                     SuOS::Database::APPConfig app;
                     app.id = item["id"].as<int>();
-                    app.name = item["name"].as<std::string>();
+                                        app.name = item["name"].as<std::string>();
                     app.status = item["status"].as<std::string>();
+                    app.path = item["path"] ? item["path"].as<std::string>() : "";
 
                     // 处理 linux_id [3]
                     if (item["linux_id"].IsSequence() && item["linux_id"].size() == 3) {

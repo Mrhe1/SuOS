@@ -3,6 +3,7 @@
 #include "suRuntime.hpp"
 #include "sysService_df.h"
 #include "SuOS_Config.h"
+#include "Uds_GeneralMsgParser.hpp"
 #include <memory>
 #include <string>
 
@@ -11,7 +12,13 @@ namespace SuOS::Service {
     class SysService : public std::enable_shared_from_this<SysService> {
     public:
         SysService(int myusr_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime)
-            : _myusr_id(myusr_id), _runtime(runtime) {}
+            : _myusr_id(myusr_id), _runtime(runtime), _parser(std::make_unique<SuOS::Uds::Msg::General::GeneralMsgParser>(_runtime, 
+                SuOS::Uds::Msg::General::GeneralMsgParser::Callbacks{
+                .onHeartbeat = nullptr,
+                .onUsrStopRequest = [this](const auto*) { stop(SuOS::Service::Df::stopCause::normal); },
+                .onUsrStopResponse = nullptr,
+                .onUsrStopKill = [this](const auto*) { stop(SuOS::Service::Df::stopCause::force); }
+            })) {}
 
         virtual ~SysService() = default;
 
@@ -53,9 +60,9 @@ namespace SuOS::Service {
 
         // 发送消息便捷接口（封装 ClientMgr）
         void sendMsg(uint32_t sender_part, uint32_t target_usr, uint32_t target_part, 
-                          uint32_t cmd_id, const std::vector<uint8_t>& payload) {
+                         const std::vector<uint8_t>& payload) {
             if (_clientMgr) {
-                _clientMgr->sendmsg(sender_part, target_usr, target_part, cmd_id, payload);
+                _clientMgr->sendmsg(sender_part, target_usr, target_part, payload);
             }
         }
 
@@ -70,14 +77,7 @@ namespace SuOS::Service {
                 [this](uint32_t s_usr, uint32_t s_part, uint32_t r_part, uint32_t cmd, const std::vector<uint8_t>& p) {
                     // 处理进程控制指令
                     if (r_part == SuOS::Config::Part::Usr_Control) {
-                        if (cmd == SuOS::Config::CommandId::usr_stop_request) {
-                            // 停止// 正常停止
-                            stop(SuOS::Service::Df::stopCause::normal);
-                        }
-                        if (cmd == SuOS::Config::CommandId::usr_stop_kill) {
-                            // 强制停止
-                            stop(SuOS::Service::Df::stopCause::force);
-                        }
+                        _parser->Parse(p.data(), p.size());
                         return;
                     }
                     // 业务消息丢给子类
@@ -104,5 +104,6 @@ namespace SuOS::Service {
         int _myusr_id;
         std::shared_ptr<SuOS::Runtime::suRuntime> _runtime;
         std::shared_ptr<SuOS::Uds::ClientMgr::ClientManager> _clientMgr;
+        std::unique_ptr<SuOS::Uds::Msg::General::GeneralMsgParser> _parser;
     };
 } // namespace SuOS::Service

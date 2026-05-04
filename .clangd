@@ -10,7 +10,7 @@ CompileFlags:
     - "-I/home/hss/SuOS/core"
     - "-I/home/hss/SuOS/core/suUDS/suUdsMgr"
     - "-I/home/hss/SuOS/core/suUDS/suUdsMsg"
-    - "-I/home/hss/SuOS/core/suUDS/suUdsMsg/partExample"
+    - "-I/home/hss/SuOS/core/suUDS/suUdsMsg/part/general"
     - "-I/home/hss/SuOS/core/suUDS/basic/include"
     - "-I/home/hss/SuOS/core/suRuntime/include"
     - "-I/home/hss/SuOS/core/Main/include"

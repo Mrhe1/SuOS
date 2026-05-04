@@ -42,7 +42,7 @@ namespace SuOS::Uds::Msg {
 
         // 构造消息
         LockGuard finalizeEnvelope(uint32_t sender_part, uint32_t receiver_usr,
-            uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload, uint32_t sender_usr = 0) {
+            uint32_t receiver_part, const std::vector<uint8_t>& sub_payload, uint32_t sender_usr = 0) {
             if (sender_usr == 0) sender_usr = _sender_usr;
             // 检查是否在事件循环中
             if(!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
@@ -50,7 +50,7 @@ namespace SuOS::Uds::Msg {
             fbb_.Clear();
             auto payload_vec = fbb_.CreateVector(sub_payload);
             auto root = SuOS::Uds::Msg::CreateMessageEnvelope
-            (fbb_, sender_usr, sender_part, receiver_usr, receiver_part, cmd_id, payload_vec);
+            (fbb_, sender_usr, sender_part, receiver_usr, receiver_part, payload_vec);
             fbb_.Finish(root);
             return LockGuard(fbb_);
         }

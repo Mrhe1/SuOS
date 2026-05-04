@@ -5,8 +5,7 @@ table MessageEnvelope {
   sender_part: uint32;
   receiver_usr: uint32;
   receiver_part: uint32;
-  cmd_id: uint32;
-  payload: [ubyte]; // ÕâÀï´æ·ÅµÚ¶þ²ãµÄ FlatBuffers ×Ö½ÚÊý×é
+  payload: [ubyte]; // ï¿½ï¿½ï¿½ï¿½ï¿½ÅµÚ¶ï¿½ï¿½ï¿½ï¿½ FlatBuffers ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½
 }
 
 root_type MessageEnvelope;

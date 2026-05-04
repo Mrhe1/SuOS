@@ -27,8 +27,7 @@ struct MessageEnvelope FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_SENDER_PART = 6,
     VT_RECEIVER_USR = 8,
     VT_RECEIVER_PART = 10,
-    VT_CMD_ID = 12,
-    VT_PAYLOAD = 14
+    VT_PAYLOAD = 12
   };
   uint32_t sender_usr() const {
     return GetField<uint32_t>(VT_SENDER_USR, 0);
@@ -42,9 +41,6 @@ struct MessageEnvelope FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t receiver_part() const {
     return GetField<uint32_t>(VT_RECEIVER_PART, 0);
   }
-  uint32_t cmd_id() const {
-    return GetField<uint32_t>(VT_CMD_ID, 0);
-  }
   const ::flatbuffers::Vector<uint8_t> *payload() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_PAYLOAD);
   }
@@ -54,7 +50,6 @@ struct MessageEnvelope FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<uint32_t>(verifier, VT_SENDER_PART, 4) &&
            VerifyField<uint32_t>(verifier, VT_RECEIVER_USR, 4) &&
            VerifyField<uint32_t>(verifier, VT_RECEIVER_PART, 4) &&
-           VerifyField<uint32_t>(verifier, VT_CMD_ID, 4) &&
            VerifyOffset(verifier, VT_PAYLOAD) &&
            verifier.VerifyVector(payload()) &&
            verifier.EndTable();
@@ -77,9 +72,6 @@ struct MessageEnvelopeBuilder {
   void add_receiver_part(uint32_t receiver_part) {
     fbb_.AddElement<uint32_t>(MessageEnvelope::VT_RECEIVER_PART, receiver_part, 0);
   }
-  void add_cmd_id(uint32_t cmd_id) {
-    fbb_.AddElement<uint32_t>(MessageEnvelope::VT_CMD_ID, cmd_id, 0);
-  }
   void add_payload(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> payload) {
     fbb_.AddOffset(MessageEnvelope::VT_PAYLOAD, payload);
   }
@@ -100,11 +92,9 @@ inline ::flatbuffers::Offset<MessageEnvelope> CreateMessageEnvelope(
     uint32_t sender_part = 0,
     uint32_t receiver_usr = 0,
     uint32_t receiver_part = 0,
-    uint32_t cmd_id = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> payload = 0) {
   MessageEnvelopeBuilder builder_(_fbb);
   builder_.add_payload(payload);
-  builder_.add_cmd_id(cmd_id);
   builder_.add_receiver_part(receiver_part);
   builder_.add_receiver_usr(receiver_usr);
   builder_.add_sender_part(sender_part);
@@ -118,7 +108,6 @@ inline ::flatbuffers::Offset<MessageEnvelope> CreateMessageEnvelopeDirect(
     uint32_t sender_part = 0,
     uint32_t receiver_usr = 0,
     uint32_t receiver_part = 0,
-    uint32_t cmd_id = 0,
     const std::vector<uint8_t> *payload = nullptr) {
   auto payload__ = payload ? _fbb.CreateVector<uint8_t>(*payload) : 0;
   return SuOS::Uds::Msg::CreateMessageEnvelope(
@@ -127,7 +116,6 @@ inline ::flatbuffers::Offset<MessageEnvelope> CreateMessageEnvelopeDirect(
       sender_part,
       receiver_usr,
       receiver_part,
-      cmd_id,
       payload__);
 }
 

@@ -23,17 +23,20 @@ namespace SuOS {
             int linux_id[3];
             std::string acl;
             std::string status;
+            std::string path;
         };
 
-        // 2. 定义 MultiIndex 容器：支持通过 ID 和 Name 快速查找
+                // 2. 定义 MultiIndex 容器：支持通过 ID 和 Name 快速查找
         typedef multi_index_container<
             UsrConfig,
             indexed_by<
             hashed_unique<tag<struct by_id>, member<UsrConfig, int, &UsrConfig::id>>,
             hashed_unique<tag<struct by_name>, member<UsrConfig, std::string, &UsrConfig::name>>,
-            hashed_non_unique<tag<struct by_group>, member<UsrConfig, std::string, &UsrConfig::group>>
+            hashed_non_unique<tag<struct by_group>, member<UsrConfig, std::string, &UsrConfig::group>>,
+            hashed_non_unique<tag<struct by_path>, member<UsrConfig, std::string, &UsrConfig::path>>
             >
         > UsrRes;
+
 
         // 1. 业务对象
         struct PartConfig {
@@ -55,22 +58,25 @@ namespace SuOS {
 
 
         // 1. 业务对象
-        struct APPConfig {
+                struct APPConfig {
             int id;
             std::string name;
             int linux_id[3];
             std::string status;
+            std::string path;
             std::vector<std::string> acl;
         };
 
-        // 2. 定义 MultiIndex 容器：支持通过 ID 和 Name 快速查找
+                // 2. 定义 MultiIndex 容器：支持通过 ID 和 Name 快速查找
         typedef multi_index_container<
             APPConfig,
             indexed_by<
             hashed_unique<tag<struct by_id>, member<APPConfig, int, &APPConfig::id>>,
             hashed_unique<tag<struct by_name>, member<APPConfig, std::string, &APPConfig::name>>,
-            hashed_non_unique<tag<struct by_status>, member<APPConfig, std::string, &APPConfig::status>>
+            hashed_non_unique<tag<struct by_status>, member<APPConfig, std::string, &APPConfig::status>>,
+            hashed_non_unique<tag<struct by_path>, member<APPConfig, std::string, &APPConfig::path>>
             >
-        > APPRes; 
+        > APPRes;
+ 
     }
 }

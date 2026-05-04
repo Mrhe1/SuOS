@@ -24,12 +24,12 @@ namespace SuOS::Uds::ClientMgr {
 	public:
 	    using onConnected = std::function<void()>;
 		using onError = std::function<void(uint32_t error_type, std::string message)>;
-		using onMsg = std::function<void(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload)>;
+		using onMsg = std::function<void(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_part, const std::vector<uint8_t>& sub_payload)>;
 		ClientManager(int my_id, std::shared_ptr<SuOS::Runtime::suRuntime> runtime, onError onError, onMsg onMsg, onConnected onConnected) : _client(nullptr), _my_id(my_id), 
 			_builder(runtime, _my_id), _parser(runtime), _runtime(runtime), _onError(onError), _onMsg(onMsg), _onConnected(onConnected),
 			_heartbeat(_runtime, [this](uint32_t sender_part, uint32_t receiver_usr,
-            uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload) {
-			this->sendmsg(sender_part, receiver_usr, receiver_part, cmd_id, sub_payload);
+            uint32_t receiver_part, const std::vector<uint8_t>& sub_payload) {
+			this->sendmsg(sender_part, receiver_usr, receiver_part, sub_payload);
 			}, [this]() {
 				// 心跳超时
 				this->handleError(SuOS::Uds::ClientMgr::Errorcode::HeartbeatTimeout, "heartbeat timeout");
@@ -52,8 +52,6 @@ namespace SuOS::Uds::ClientMgr {
 
 				if (guard.isValid()) {
 					// 获取消息
-					//获取 cmd_id
-					auto cmd_id = guard.getCmdId();
 					// 获取 payload
 					auto payload_data = guard.payloadData();
 					auto paylod_size = guard.payloadSize();
@@ -70,13 +68,13 @@ namespace SuOS::Uds::ClientMgr {
 					// 处理消息
 
 					if(receiver_usr == _my_id) {
-						if(cmd_id == _heartbeat_id && sender_part == _router_part && sender_usr == _router_id) {
-							_heartbeat.onMsg(sender_usr, sender_part, receiver_part, cmd_id, payload);
+						if(sender_part == _haertbeat_part && sender_usr == _router_id && receiver_part == _haertbeat_part) {
+							_heartbeat.onMsg(sender_usr, sender_part, receiver_part, payload);
 						}
 						else {
 							// 处理其他命令
 							if(_onMsg) {
-								_onMsg(sender_usr, sender_part, receiver_part, cmd_id, payload);
+								_onMsg(sender_usr, sender_part, receiver_part, payload);
 							}
 						}
 					}
@@ -158,9 +156,9 @@ namespace SuOS::Uds::ClientMgr {
 		}
 
 		uint32_t sendmsg(uint32_t sender_part, uint32_t receiver_usr,
-            uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& sub_payload) {
-				_runtime->dispatch([this, sender_part, receiver_usr, receiver_part, cmd_id, sub_payload] () {
-					auto guard = _builder.finalizeEnvelope(sender_part, receiver_usr, receiver_part, cmd_id, sub_payload);
+            uint32_t receiver_part, const std::vector<uint8_t>& sub_payload) {
+				_runtime->dispatch([this, sender_part, receiver_usr, receiver_part, sub_payload] () {
+					auto guard = _builder.finalizeEnvelope(sender_part, receiver_usr, receiver_part, sub_payload);
 					uint8_t* data = guard.data();
 					size_t size = guard.size();
 					std::vector<char> data_vec(data, data + size);
@@ -374,9 +372,10 @@ namespace SuOS::Uds::ClientMgr {
 		const int _client_connect_dur = SuOS::Uds::ClientMgr::Df::client_connect_dur;
 		const uint32_t _router_id = SuOS::Config::Usr::ROUTER;
 		const uint32_t _router_part = SuOS::Config::Part::ROUTER;
+		const uint32_t _haertbeat_part = SuOS::Config::Part::Heartbeat;
 		const uint32_t _router_uid = SuOS::Config::uid::ROUTER;
 		const uint32_t _router_gid = SuOS::Config::gid::ROUTER;
-		const uint32_t _heartbeat_id = SuOS::Config::CommandId::heartbeat_id;
+		//const uint32_t _heartbeat_id = SuOS::Config::CommandId::heartbeat_id;
 		// 自身usr_id
 		const uint32_t _my_id;
 		const std::string _uds_path = std::string(SuOS::Uds::ClientMgr::Df::uds_path);
