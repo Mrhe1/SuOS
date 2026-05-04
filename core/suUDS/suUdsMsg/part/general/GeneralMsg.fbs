@@ -1,0 +1,24 @@
+// core/suUDS/suUdsMsg/general/GeneralMsg.fbs
+namespace SuOS.Uds.Msg.General;
+
+// ---- 空消息类型定义 (Command ID 映射) ----
+table Heartbeat { }
+table UsrStopRequest { }
+table UsrStopResponse { }
+table UsrStopKill { }
+
+// ---- Union 定义 ----
+// 使用 union 将所有可能的空消息统一起来
+union GeneralPayload {
+    Heartbeat,
+    UsrStopRequest,
+    UsrStopResponse,
+    UsrStopKill,
+}
+
+// ---- 包装表 ----
+table GeneralEnvelope {
+    payload: GeneralPayload;
+}
+
+root_type GeneralEnvelope;

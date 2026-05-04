@@ -57,15 +57,15 @@ namespace SuOS {
             constexpr uint32_t Usr_Control = 10014;
         }
 
-        namespace CommandId {
-            constexpr uint32_t heartbeat_id = 100001;
-            // main命令一个usr（进程）stop
-            constexpr uint32_t usr_stop_request = 100002;
-            // usr(进程)回报main应该准备好被关闭
-            constexpr uint32_t usr_stop_response = 100003;
-            // main遇到问题，停止进程会被kill
-            constexpr uint32_t usr_stop_kill = 100004;
-        }
+        // namespace CommandId {
+        //     constexpr uint32_t heartbeat_id = 100001;
+        //     // main命令一个usr（进程）stop
+        //     constexpr uint32_t usr_stop_request = 100002;
+        //     // usr(进程)回报main应该准备好被关闭
+        //     constexpr uint32_t usr_stop_response = 100003;
+        //     // main遇到问题，停止进程会被kill
+        //     constexpr uint32_t usr_stop_kill = 100004;
+        // }
 
         namespace uid {
             // 待定
