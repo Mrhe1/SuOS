@@ -11,11 +11,13 @@ CompileFlags:
     - "-I/home/hss/SuOS/core/suUDS/suUdsMgr"
     - "-I/home/hss/SuOS/core/suUDS/suUdsMsg"
     - "-I/home/hss/SuOS/core/suUDS/suUdsMsg/part/general"
+    - "-I/home/hss/SuOS/core/suUDS/suUdsMsg/part/router"
     - "-I/home/hss/SuOS/core/suUDS/basic/include"
     - "-I/home/hss/SuOS/core/suRuntime/include"
     - "-I/home/hss/SuOS/core/Main/include"
     - "-I/home/hss/SuOS/core/SysService"
     - "-I/home/hss/SuOS/core/Main/Database"
     - "-I/home/hss/SuOS/core/Router"
+    - "-I/home/hss/SuOS/core/Graphics"
   
   CompilationDatabase: "build"

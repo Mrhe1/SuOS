@@ -10,7 +10,7 @@ namespace SuOS::Uds::Router {
     class Router_Heartbeat {
     public:
         using OnTimeout = std::function<void(uint32_t client_id)>;
-        using SendFunc = std::function<void(uint32_t target_id, uint32_t cmd_id, const std::vector<uint8_t>& payload)>;
+        using SendFunc = std::function<void(uint32_t target_id, const std::vector<uint8_t>& payload)>;
 
         Router_Heartbeat(std::shared_ptr<SuOS::Runtime::suRuntime> runtime, SendFunc send_func, OnTimeout on_timeout)
             : _runtime(runtime), _send_func(send_func), _on_timeout(on_timeout) {}
@@ -20,7 +20,7 @@ namespace SuOS::Uds::Router {
             _broadcast_task = _runtime->scheduleAtFixedRate(1000, 1600, [this, get_clients]() {
                 auto clients = get_clients();
                 for (auto cid : clients) {
-                    _send_func(cid, SuOS::Config::CommandId::heartbeat_id, {});
+                    _send_func(cid, {});
                 }
             }, false);
         }

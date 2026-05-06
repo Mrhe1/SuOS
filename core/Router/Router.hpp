@@ -6,6 +6,8 @@
 #include "Router_Heartbeat.hpp"
 #include "Uds_MsgBuilder.hpp"
 #include "Uds_MsgParser.hpp"
+#include "Uds_RouterMsgBuilder.hpp"
+#include "Uds_RouterMsgParser.hpp"
 #include "suRuntime.hpp"
 #include "SuOS_Config.h"
 #include <iostream>
@@ -25,8 +27,9 @@ namespace SuOS::Uds::Router {
               _status_cb(status_cb),
               _builder(runtime),
               _parser(runtime),
+              _router_msg_builder(runtime),
               _heartbeat(runtime, 
-                [this](uint32_t tid, uint32_t cmd, const std::vector<uint8_t>& p) { this->raw_send(tid, cmd, p); },
+                [this](uint32_t tid, const std::vector<uint8_t>& p) { this->raw_send(tid, p); },
                 [this](uint32_t cid) { this->handle_client_timeout(cid); }) 
         {}
 
@@ -54,15 +57,25 @@ namespace SuOS::Uds::Router {
         }
 
         // 核心转发接口
-        void route_message(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_usr, uint32_t receiver_part, uint32_t cmd_id, const std::vector<uint8_t>& payload) {
-            _runtime->dispatch([this, sender_usr, sender_part, receiver_usr, receiver_part, cmd_id, payload]() {
+        void route_message(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_usr, uint32_t receiver_part, const std::vector<uint8_t>& payload) {
+            _runtime->dispatch([this, sender_usr, sender_part, receiver_usr, receiver_part, payload]() {
                 auto guard = _builder.finalizeEnvelope(sender_part, receiver_usr, receiver_part, payload, sender_usr);
                 std::vector<char> data(guard.data(), guard.data() + guard.size());
                 
                 if (receiver_usr == SuOS::Config::Usr::ROUTER) {
                     // 发给自己的消息（如心跳响应）内部消化
-                    if (cmd_id == SuOS::Config::CommandId::heartbeat_id) {
+                    if (receiver_part == SuOS::Config::Part::Heartbeat) {
                         _heartbeat.updateClient(sender_usr);
+                    }
+
+                    if (receiver_part == SuOS::Config::Part::ROUTER) {
+                        // 处理来自 Main 的控制命令（如强制断开某个客户端）
+                        handle_router_msg(data);
+                    }
+
+                    if (receiver_part == SuOS::Config::Part::Usr_Control) {
+                        // 处理控制信息
+                        // 暂时不用
                     }
                 } else {
                     // 转发给目标 Client
@@ -97,13 +110,15 @@ namespace SuOS::Uds::Router {
                 return;
             }
 
-            uint32_t target = guard.getReceiverUsr();
-            uint32_t cmd = guard.getCmdId();
+            uint32_t target_usr = guard.getReceiverUsr();
+            uint32_t target_part = guard.getReceiverPart();
+            uint32_t sender_usr = guard.getSenderUsr();
+            uint32_t sender_part = guard.getSenderPart();
             
             // 数据提取
             std::vector<uint8_t> payload(guard.payloadData(), guard.payloadData() + guard.payloadSize());
 
-            route_message(cid, target, cmd, payload);
+            route_message(sender_usr, sender_part, target_usr, target_part, payload);
         }
 
         // 3. 认证逻辑（占位）
@@ -117,7 +132,7 @@ namespace SuOS::Uds::Router {
         void report_to_main(uint32_t client_id, bool online) {
             // 向特殊 ID (MAIN) 发送报告
             std::vector<uint8_t> report_data = { online ? (uint8_t)1 : (uint8_t)0 };
-            route_message(SuOS::Config::Usr::ROUTER, SuOS::Config::Usr::MAIN, 0x99, report_data);
+            route_message(SuOS::Config::Usr::ROUTER, SuOS::Config::Usr::MAIN, report_data);
         }
 
         void handle_client_timeout(uint32_t cid) {
@@ -133,9 +148,16 @@ namespace SuOS::Uds::Router {
         }
 
         // 辅助：内部发送
-        void raw_send(uint32_t target_id, uint32_t cmd_id, const std::vector<uint8_t>& payload) {
-            auto guard = _builder.finalizeEnvelope(SuOS::Config::Part::Heartbeat, target_id, SuOS::Config::Part::Heartbeat, cmd_id, payload);
+        void raw_send(uint32_t target_id, const std::vector<uint8_t>& payload) {
+            auto guard = _builder.finalizeEnvelope(SuOS::Config::Part::Heartbeat, target_id, SuOS::Config::Part::Heartbeat, payload);
             _server->send_async(target_id, std::vector<char>(guard.data(), guard.data() + guard.size()));
+        }
+
+        // 处理对象router的msg
+        void handle_router_msg(std::vector<char> data) {
+            // 这里可以处理来自 Main 的控制命令
+            auto guard = _parser.ParseMsg(reinterpret_cast<const uint8_t*>(data.data()), data.size());
+
         }
 
         std::shared_ptr<SuOS::Runtime::suRuntime> _runtime;
@@ -144,6 +166,7 @@ namespace SuOS::Uds::Router {
         Router_Heartbeat _heartbeat;
         SuOS::Uds::Msg::MessageBuilder _builder;
         SuOS::Uds::Msg::MessageParser _parser;
+        SuOS::Uds::Msg::Router::RouterMsgBuilder _router_msg_builder;
         OnClientStatus _status_cb;
     };
 }
