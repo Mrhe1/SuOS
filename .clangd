@@ -18,6 +18,7 @@ CompileFlags:
     - "-I/home/hss/SuOS/core/SysService"
     - "-I/home/hss/SuOS/core/Main/Database"
     - "-I/home/hss/SuOS/core/Router"
-    - "-I/home/hss/SuOS/core/Graphics"
+    - "-I/home/hss/SuOS/core/Graphics/Vram"
+    - "-I/home/hss/SuOS/core/Graphics/Rga/include"
   
   CompilationDatabase: "build"
