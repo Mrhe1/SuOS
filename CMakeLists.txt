@@ -1,71 +1,68 @@
 ﻿cmake_minimum_required(VERSION 3.15)
 project(SuOS VERSION 1.0.0 LANGUAGES CXX)
 
-# 1. 关键设置：导出编译数据库供 clangd 使用
+# 强制开启编译数据库支持，让 clangd 能正确读取
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# 2. C++ 标准设置
+# C++ 标准及配置
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# 3. 编译选项（适配 ARM 交叉编译）
+# 确保在 Debug/Release 下都有良好的编译输出
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
-# 4. 查找依赖（Boost 会根据 SYSROOT 自动寻找）
-find_package(Boost REQUIRED COMPONENTS system)
-
-# 5. 定义项目目录变量
+# 基础目录定义
 set(CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core")
-set(UDS_DIR "${CORE_DIR}/suUDS")
-set(UDS_BASIC_DIR "${CORE_DIR}/suUDS/basic")
-set(UDS_MGR_DIR "${CORE_DIR}/suUDS/suUdsMgr")
-set(UDS_MSG_DIR "${CORE_DIR}/suUDS/suUdsMsg")
-set(RUNTIME_DIR "${CORE_DIR}/suRuntime")
 
-# --- 库配置开始 ---
+# --- 1. 定义核心模块 (INTERFACE 库仅用于传播头文件路径) ---
 
-# [基础库] 包含 Uds_Client.h
-add_library(suUDS_basic STATIC
-    "${UDS_BASIC_DIR}/src/Uds_Client.cpp"
-    "${UDS_BASIC_DIR}/src/Uds_Server.cpp"
+# [UDS 相关模块]
+add_library(lib_uds_basic STATIC 
+    "${CORE_DIR}/suUDS/basic/src/Uds_Client.cpp"
+    "${CORE_DIR}/suUDS/basic/src/Uds_Server.cpp"
 )
-target_include_directories(suUDS_basic PUBLIC "${UDS_BASIC_DIR}/include")
-target_link_libraries(suUDS_basic PUBLIC Boost::system)
+target_include_directories(lib_uds_basic PUBLIC "${CORE_DIR}/suUDS/basic/include")
 
-# [管理器库] 只有头文件
-# 建议：如果 clangd 找不到头文件，可以将 INTERFACE 改为 STATIC 并添加一个空的 stub.cpp
-add_library(suUDS_mgr INTERFACE)
-target_include_directories(suUDS_mgr INTERFACE "${UDS_MGR_DIR}")
-target_link_libraries(suUDS_mgr INTERFACE suUDS_basic)
+add_library(lib_uds_mgr INTERFACE)
+target_include_directories(lib_uds_mgr INTERFACE "${CORE_DIR}/suUDS/suUdsMgr")
 
-# [消息库] 只有头文件
-add_library(suUDS_msg INTERFACE)
-target_include_directories(suUDS_msg INTERFACE "${UDS_MSG_DIR}")
+add_library(lib_uds_msg INTERFACE)
+target_include_directories(lib_uds_msg INTERFACE "${CORE_DIR}/suUDS/suUdsMsg")
 
-# [运行时库]
-add_library(suRuntime INTERFACE)
-target_include_directories(suRuntime INTERFACE "${RUNTIME_DIR}/include")
+# [Graphics 模块]：解决你的 VramProvider 找不到的问题
+add_library(lib_graphics INTERFACE)
+target_include_directories(lib_graphics INTERFACE 
+    "${CORE_DIR}/Graphics/Rga/include"
+    "${CORE_DIR}/Graphics/Vram"
+    "${CORE_DIR}/Graphics/Vtimer"
+)
 
-# --- 主程序配置 ---
+# [其他核心模块]
+add_library(lib_runtime INTERFACE)
+target_include_directories(lib_runtime INTERFACE "${CORE_DIR}/suRuntime/include")
 
-add_executable(SuOS
-    SuOS.cpp
+add_library(lib_main_inc INTERFACE)
+target_include_directories(lib_main_inc INTERFACE "${CORE_DIR}/Main/include")
+
+# --- 2. 主程序配置 ---
+
+add_executable(SuOS 
+    SuOS.cpp 
     core/Main/src/main.cpp
 )
 
-# 添加包含目录，让编译器能找到头文件
-target_include_directories(SuOS PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/core/SysService"
-    "${CMAKE_CURRENT_SOURCE_DIR}/core/Main/include"
-)
-
+# 自动关联所有依赖，头文件搜索路径会自动传播
 target_link_libraries(SuOS PRIVATE
-    suUDS_basic
-    suUDS_mgr
-    suUDS_msg
-    suRuntime
+    lib_uds_basic
+    lib_uds_mgr
+    lib_uds_msg
+    lib_graphics
+    lib_runtime
+    lib_main_inc
     pthread
 )
+
+# --- 3. 可选：如果还需要包含根目录 ---
+target_include_directories(SuOS PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

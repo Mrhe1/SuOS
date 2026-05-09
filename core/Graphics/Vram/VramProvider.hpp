@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <stdexcept>
+#include <cstring>
 
 // === Linux 底层依赖 ===
 #include <fcntl.h>
@@ -16,9 +17,49 @@
 #include <sys/ioctl.h>
 #include <drm/drm.h>       // 需确保编译环境中包含内核 drm 头文件
 #include <drm/drm_mode.h>
+#include <optional>
+#include "rga/rga.h"
 
 namespace SuOS {
 namespace graphics {
+
+// --- 新增基础结构体与枚举 ---
+
+enum class BufferState {
+    IDLE,       // 空闲：尚未分配工作流，或者工作流已完全结束
+    READY,      // 就绪：工作流已创建并设置了基础信息，但尚未开始第一个步骤
+    RUNNING     // 运行中：工作流正在执行某个具体步骤
+};
+
+struct DirtyRect {
+    uint32_t x;
+    uint32_t y;
+    uint32_t width;
+    uint32_t height;
+};
+
+/**
+ * @brief 单帧工作流上下文信息
+ */
+struct WorkflowContext {
+    uint32_t frame_num = 0;
+    int color_fmt = _Rga_SURF_FORMAT::RK_FORMAT_UNKNOWN;
+    std::vector<DirtyRect> dirty_rects;
+    BufferState state = BufferState::IDLE;
+    std::vector<std::string> planned_steps;
+    size_t current_step_idx = 0;
+    bool step_busy = false;
+
+    void reset() {
+        frame_num = 0;
+        color_fmt = _Rga_SURF_FORMAT::RK_FORMAT_UNKNOWN;
+        dirty_rects.clear();
+        state = BufferState::IDLE;
+        planned_steps.clear();
+        current_step_idx = 0;
+        step_busy = false;
+    }
+};
 
 class VramUsr;
 
@@ -32,7 +73,9 @@ public:
     VBuffer(int drm_fd, uint32_t handle, int dma_fd, uint32_t width, uint32_t height, uint32_t pitch, size_t size, void* vaddr, const std::string& owner_name)
         : drm_fd_(drm_fd), handle_(handle), fd_(dma_fd), 
           width_(width), height_(height), pitch_(pitch), size_(size), 
-          vaddr_(vaddr), owner_name_(owner_name) {}
+          vaddr_(vaddr), owner_name_(owner_name) {
+        ctx_.reset();
+    }
 
     ~VBuffer() {
         std::cout << "[VBuffer] Releasing Hardware Memory for: " << owner_name_ << std::endl;
@@ -57,16 +100,115 @@ public:
         std::cout << "[VBuffer] Cleanup complete. FD " << fd_ << " closed." << std::endl;
     }
 
-    // --- 留给硬件异步的标记锁机 ---
-    void reportAccessStart(const std::string& tag) {
-        access_mtx_.lock();
-        current_access_tag_ = tag;
-        is_busy_.store(true);
+    // ==========================================
+    // --- 核心：工作流状态机接口 ---
+    // ==========================================
+
+    /**
+     * @brief 一. 创建工作流：设置基础信息
+     */
+    bool setupWorkflow(uint32_t frame_num, const std::vector<std::string>& planned_steps, int color_fmt) {
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        if (ctx_.state != BufferState::IDLE) {
+            std::cerr << "[VBuffer] Cannot setup workflow. Buffer is not IDLE.\n";
+            return false;
+        }
+        
+        ctx_.frame_num = frame_num;
+        ctx_.planned_steps = planned_steps;
+        ctx_.color_fmt = color_fmt;
+        ctx_.current_step_idx = 0;
+        ctx_.dirty_rects.clear();
+        ctx_.step_busy = false;
+        ctx_.state = BufferState::READY;
+        return true;
     }
-    void reportAccessEnd() {
-        is_busy_.store(false);
-        current_access_tag_ = "idle";
-        access_mtx_.unlock();
+
+    /**
+     * @brief 二. 更新脏区
+     */
+    void addDirtyRect(const DirtyRect& rect) {
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        // 允许在 READY 和 RUNNING 状态下随时更新脏区
+        if (ctx_.state == BufferState::READY || ctx_.state == BufferState::RUNNING) {
+            ctx_.dirty_rects.push_back(rect);
+        }
+    }
+
+    /**
+     * @brief 三, 五. 通知单步开始 (推进状态机)
+     */
+    bool startStep(const std::string& tag) {
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        if (ctx_.state == BufferState::IDLE) return false;
+        if (ctx_.step_busy) {
+            std::cerr << "[VBuffer] Hardware is actively busy in a step!\n";
+            return false;
+        }
+        if (ctx_.current_step_idx >= ctx_.planned_steps.size() || ctx_.planned_steps[ctx_.current_step_idx] != tag) {
+            std::cerr << "[VBuffer] Step mismatch! Expected: " << (ctx_.current_step_idx < ctx_.planned_steps.size() ? ctx_.planned_steps[ctx_.current_step_idx] : "None") << ", Got: " << tag << "\n";
+            return false;
+        }
+
+        ctx_.state = BufferState::RUNNING;
+        ctx_.step_busy = true; // 锁定硬件实际占用状态
+        return true;
+    }
+
+    /**
+     * @brief 三, 五. 通知单步结束
+     */
+    bool finishStep(const std::string& tag) {
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        if (ctx_.state != BufferState::RUNNING || !ctx_.step_busy) return false;
+        if (ctx_.planned_steps[ctx_.current_step_idx] != tag) return false;
+
+        ctx_.step_busy = false; // 解除实际硬件占用
+        ctx_.current_step_idx++;
+
+        // 检查整个工作流是否完成
+        if (ctx_.current_step_idx >= ctx_.planned_steps.size()) {
+            ctx_.state = BufferState::IDLE; // 工作流完成，回到 IDLE
+            std::cout << "[VBuffer] Workflow completed for Frame: " << ctx_.frame_num << "\n";
+        }
+        return true;
+    }
+
+    /**
+     * @brief 六. 取消工作流 (仅在未实际运行任务时)
+     */
+    bool cancelWorkflow() {
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        // 如果步内操作正在进行（意味着底层RGA或硬件锁住了FD），拒绝取消
+        if (ctx_.step_busy) {
+            std::cerr << "[VBuffer] Cannot cancel workflow while hardware step is executing!\n";
+            return false; 
+        }
+
+        // 重置整个结构体
+        uint32_t old_frame = ctx_.frame_num;
+        ctx_.reset();
+        std::cout << "[VBuffer] Workflow cancelled and context cleared for Frame: " << old_frame << "\n";
+        return true;
+    }
+
+    // --- 状态访问器 ---
+    BufferState getState() { 
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        return ctx_.state; 
+    }
+    uint32_t getFrameNum() { 
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        return ctx_.frame_num; 
+    }
+    std::vector<DirtyRect> getDirtyRects() {
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        return ctx_.dirty_rects;
+    }
+
+    int getColorFormat() {
+        std::lock_guard<std::mutex> lock(workflow_mtx_);
+        return ctx_.color_fmt;
     }
 
     // 访问器
@@ -75,7 +217,7 @@ public:
     size_t getSize() const { return size_; }
     uint32_t getWidth() const { return width_; }
     uint32_t getHeight() const { return height_; }
-    uint32_t getPitch() const { return pitch_; } // 极其重要：实际行的字节宽度（可能因字节对齐大于 width * bpp）
+    uint32_t getPitch() const { return pitch_; } // 极其重要：实际行的字节宽度
 
 private:
     int drm_fd_;          // 系统 DRM 设备描述符
@@ -89,9 +231,9 @@ private:
     void* vaddr_;         // CPU 可访问指针
     std::string owner_name_;
     
-    std::mutex access_mtx_;
-    std::atomic<bool> is_busy_{false};
-    std::string current_access_tag_{"idle"};
+    // --- 工作流与状态机相关属性 ---
+    std::mutex workflow_mtx_;
+    WorkflowContext ctx_;
 };
 
 
@@ -142,17 +284,22 @@ public:
         struct drm_mode_map_dumb mreq = {};
         mreq.handle = creq.handle;
         if (ioctl(drm_fd_, DRM_IOCTL_MODE_MAP_DUMB, &mreq) < 0) {
-            // 省略清理代码，同上
+            struct drm_mode_destroy_dumb dreq = { .handle = creq.handle };
+            ioctl(drm_fd_, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
+            close(dma_fd);
             throw std::runtime_error("DRM_IOCTL_MODE_MAP_DUMB failed");
         }
 
         // mreq.offset 是 DRM 生成的假偏移量，用于触发内核的内存映射逻辑
         void* vaddr = mmap(0, creq.size, PROT_READ | PROT_WRITE, MAP_SHARED, drm_fd_, mreq.offset);
         if (vaddr == MAP_FAILED) {
+            struct drm_mode_destroy_dumb dreq = { .handle = creq.handle };
+            ioctl(drm_fd_, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
+            close(dma_fd);
             throw std::runtime_error("mmap failed for Dumb Buffer");
         }
 
-        // 4. 清理脏数据（可选，防止出现花屏）
+        // 4. 清理脏数据（可选，防止出现花屏）// 目前无用，暂时保留
         memset(vaddr, 0, creq.size);
 
         // 5. 将获取到的所有真实数据塞入 VBuffer 对象
@@ -171,6 +318,39 @@ public:
         if (!active_buffers_.empty()) {
             active_buffers_.clear(); // 触发 VBuffer 析构，执行 munmap 和 close
         }
+    }
+
+    // ==========================================
+    // --- 四. 可用显存及特定显存查询接口 ---
+    // ==========================================
+
+    /**
+     * @brief 寻找符合尺寸要求且空闲 (IDLE) 的 VBuffer
+     */
+    std::shared_ptr<VBuffer> getAvailableBuffer(uint32_t width, uint32_t height) {
+        std::lock_guard<std::mutex> lock(usr_mtx_);
+        for (const auto& buf : active_buffers_) {
+            if (buf->getState() == BufferState::IDLE && 
+                buf->getWidth() == width && buf->getHeight() == height) {
+                return buf; // 命中现有的可用显存
+            }
+        }
+        return nullptr;
+    }
+
+    /**
+     * @brief 寻找含有特定 frame num 且状态相符的显存
+     */
+    std::shared_ptr<VBuffer> findBufferByFrameNum(uint32_t frame_num, std::optional<BufferState> required_state = std::nullopt) {
+        std::lock_guard<std::mutex> lock(usr_mtx_);
+        for (const auto& buf : active_buffers_) {
+            if (buf->getFrameNum() == frame_num) {
+                if (!required_state.has_value() || buf->getState() == required_state.value()) {
+                    return buf;
+                }
+            }
+        }
+        return nullptr;
     }
 
 private:
