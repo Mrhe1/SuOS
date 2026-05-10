@@ -17,15 +17,15 @@ table onConnectionLost {
 
 // ---- Union 定义 ----
 // 使用 union 将所有可能的空消息统一起来
-union RouterPayload {
+union RouterPayload_fromRouter {
     enableAppRegister,
     onConnect,
     onConnectionLost
 }
 
 // ---- 包装表 ----
-table RouterEnvelope {
-    payload: RouterPayload;
+table RouterEnvelope_fromRouter {
+    payload: RouterPayload_fromRouter;
 }
 
-root_type RouterEnvelope;
+root_type RouterEnvelope_fromRouter;

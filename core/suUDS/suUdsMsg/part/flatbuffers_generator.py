@@ -196,15 +196,61 @@ namespace {ns_cpp} {{
 
         # 2. Parser
         parser_path = self.output_dir / f"Uds_{class_name}Parser.hpp"
-        cb_defs_str = "\n".join([f"        using {m}Callback = std::function<void(const {m}*)>;" for m in members if m in self.schema.tables])
-        cb_vars_str = "\n".join([f"            {m}Callback on{m};" for m in members if m in self.schema.tables])
+        cb_defs_list = []
+        cb_vars_list = []
+        for m in members:
+            table = self.schema.tables.get(m)
+            if not table: continue
+            
+            cpp_args_list = []
+            for f in table.fields:
+                if f.is_string:
+                    cpp_args_list.append(f"const std::string& {f.name}")
+                elif f.is_vector:
+                    cpp_args_list.append(f"const std::vector<{self._get_cpp_type(f.type)}>& {f.name}")
+                else:
+                    cpp_args_list.append(f"{self._get_cpp_type(f.type)} {f.name}")
+            args_str = ", ".join(cpp_args_list)
+            
+            cb_defs_list.append(f"        using {m}Callback = std::function<void({args_str})>;")
+            cb_vars_list.append(f"            {m}Callback on{m};")
+        
+        cb_defs_str = "\n".join(cb_defs_list)
+        cb_vars_str = "\n".join(cb_vars_list)
         
         cases_list = []
         for m in members:
-            if m not in self.schema.tables: continue
-            cases_list.append(f"""                case {union_name}_{m}:
-                    if (_callbacks.on{m}) _callbacks.on{m}(static_cast<const {m}*>(payload));
-                    break;""")
+            table = self.schema.tables.get(m)
+            if not table: continue
+            
+            extract_list = []
+            call_args_list = []
+            for f in table.fields:
+                if f.is_string:
+                    extract_list.append(f"                    std::string {f.name}_val = table->{f.name}() ? table->{f.name}()->str() : \"\";")
+                    call_args_list.append(f"{f.name}_val")
+                elif f.is_vector:
+                    cpp_t = self._get_cpp_type(f.type)
+                    extract_list.append(f"                    std::vector<{cpp_t}> {f.name}_val;")
+                    extract_list.append(f"                    if (table->{f.name}()) {f.name}_val.assign(table->{f.name}()->begin(), table->{f.name}()->end());")
+                    call_args_list.append(f"{f.name}_val")
+                else:
+                    extract_list.append(f"                    auto {f.name}_val = table->{f.name}();")
+                    call_args_list.append(f"{f.name}_val")
+                    
+            extract_str = "\n".join(extract_list)
+            if extract_str:
+                extract_str = extract_str + "\n"
+            call_args_str = ", ".join(call_args_list)
+            
+            cases_list.append(f"""                case {union_name}_{m}: {{
+                    if (_callbacks.on{m}) {{
+                        auto table = static_cast<const {m}*>(payload);
+                        (void)table;
+{extract_str}                        _callbacks.on{m}({call_args_str});
+                    }}
+                    break;
+                }}""")
         all_cases = "\n".join(cases_list)
 
         parser_content = f"""#pragma once
@@ -214,6 +260,8 @@ namespace {ns_cpp} {{
 #include "suRuntime.hpp"
 #include <functional>
 #include <memory>
+#include <vector>
+#include <string>
 namespace {ns_cpp} {{
     class {class_name}Parser {{
     public:

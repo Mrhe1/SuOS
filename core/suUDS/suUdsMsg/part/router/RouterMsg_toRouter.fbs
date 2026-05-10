@@ -1,0 +1,19 @@
+namespace SuOS.Uds.Msg.Router;
+
+// ---- 消息类型定义 ----
+table enableAppRegister { 
+    app_id: uint32;
+}
+
+// ---- Union 定义 ----
+// 使用 union 将所有可能的空消息统一起来
+union RouterPayload_toRouter {
+    enableAppRegister
+}
+
+// ---- 包装表 ----
+table RouterEnvelope_toRouter {
+    payload: RouterPayload_toRouter;
+}
+
+root_type RouterEnvelope_toRouter;

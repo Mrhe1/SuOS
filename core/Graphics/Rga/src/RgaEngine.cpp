@@ -104,31 +104,63 @@ std::shared_ptr<RgaJobHandle> RgaEngine::submit(const RgaChain& chain, RgaCallba
         // 从池中按需获取组装好的 src / dst 参数，完美支持显存异构和重复组合
         rga_buffer_t r_src = get_bundled_buffer(step.src, step.src_cfg);
         rga_buffer_t r_dst = get_bundled_buffer(step.dst, step.dst_cfg);
+        rga_buffer_t r_pat = get_bundled_buffer(step.pat, step.pat_cfg);
 
         // 无论上层如何复用同一块显存，每一步的区域矩形始终由独立的 src_cfg/dst_cfg 来控制
         im_rect s_rect = {step.src_cfg.x_offset, step.src_cfg.y_offset, step.src_cfg.width, step.src_cfg.height};
         im_rect d_rect = {step.dst_cfg.x_offset, step.dst_cfg.y_offset, step.dst_cfg.width, step.dst_cfg.height};
+        im_rect p_rect = {step.pat_cfg.x_offset, step.pat_cfg.y_offset, step.pat_cfg.width, step.pat_cfg.height};
         im_rect empty_rect = {0};
 
         switch (step.type) {
             case RgaStepType::COPY:
-                improcessTask(job_id, r_src, r_dst, {}, s_rect, d_rect, empty_rect, nullptr, 0);
+                imcopyTask(job_id, r_src, r_dst);
                 break;
             case RgaStepType::ROTATE:
-                improcessTask(job_id, r_src, r_dst, {}, s_rect, d_rect, empty_rect, nullptr, getRotationUsage(step.angle));
+                imrotateTask(job_id, r_src, r_dst, getRotationUsage(step.angle));
                 break;
-            case RgaStepType::FILL: {
+            case RgaStepType::FILL:
                 imfillTask(job_id, r_dst, d_rect, step.color);
                 break;
-            }
-            case RgaStepType::BLEND: {
-                improcessTask(job_id, r_src, r_dst, {}, s_rect, d_rect, empty_rect, nullptr, step.blend_mode);
+            case RgaStepType::BLEND:
+                imblendTask(job_id, r_src, r_dst, step.mode);
                 break;
-            }
-            case RgaStepType::OSD: {
+            case RgaStepType::OSD:
                 imosdTask(job_id, r_src, r_dst, d_rect, const_cast<im_osd_t*>(&step.osd_cfg));
                 break;
-            }
+            case RgaStepType::RESIZE:
+                imresizeTask(job_id, r_src, r_dst, step.fx, step.fy);
+                break;
+            case RgaStepType::CROP:
+                imcropTask(job_id, r_src, r_dst, s_rect);
+                break;
+            case RgaStepType::COLOR_CONVERT:
+                imcvtcolorTask(job_id, r_src, r_dst, step.src_cfg.format, step.dst_cfg.format, step.mode);
+                break;
+            case RgaStepType::FLIP:
+                imflipTask(job_id, r_src, r_dst, step.mode);
+                break;
+            case RgaStepType::COMPOSITE:
+                imcompositeTask(job_id, r_src, r_pat, r_dst, step.mode);
+                break;
+            case RgaStepType::COLOR_KEY:
+                imcolorkeyTask(job_id, r_src, r_dst, step.ck_range, step.mode);
+                break;
+            case RgaStepType::MOSAIC:
+                immosaicTask(job_id, r_dst, d_rect, step.mode);
+                break;
+            case RgaStepType::RECTANGLE:
+                imrectangleTask(job_id, r_dst, d_rect, step.color, step.thickness);
+                break;
+            case RgaStepType::FILL_ARRAY:
+                imfillTaskArray(job_id, r_dst, const_cast<im_rect*>(step.rects.data()), step.rects.size(), step.color);
+                break;
+            case RgaStepType::RECTANGLE_ARRAY:
+                imrectangleTaskArray(job_id, r_dst, const_cast<im_rect*>(step.rects.data()), step.rects.size(), step.color, step.thickness);
+                break;
+            case RgaStepType::MOSAIC_ARRAY:
+                immosaicTaskArray(job_id, r_dst, const_cast<im_rect*>(step.rects.data()), step.rects.size(), step.mode);
+                break;
         }
 
         imendJob(job_id, IM_ASYNC, current_in_fence, &current_out_fence); 

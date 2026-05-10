@@ -1,0 +1,17 @@
+namespace SuOS.Uds.Msg.General;
+
+// ---- 空消息类型定义 (Command ID 映射) ----
+table UsrStopResponse { }
+
+// ---- Union 定义 ----
+// 使用 union 将所有可能的空消息统一起来
+union GeneralPayload_toMain {
+    UsrStopResponse
+}
+
+// ---- 包装表 ----
+table GeneralEnvelope_toMain {
+    payload: GeneralPayload_toMain;
+}
+
+root_type GeneralEnvelope_toMain;

@@ -14,7 +14,7 @@
 #include <boost/asio.hpp>
 
 // 假设已包含你提供的 suRuntime 头文件
-#include "su_runtime.hpp" 
+#include "suRuntime.hpp" 
 
 namespace SuOS {
 namespace Runtime {
@@ -43,13 +43,22 @@ public:
             : name_(name), provider_(provider) {}
 
         /**
-         * @brief 提交任务到指定的 VSync 周期与偏移时刻
-         * @param frames_ahead 目标 VSync，0代表当前即将到来的下一个VSync，1代表下下个，以此类推
+         * @brief 提交任务到绝对的 VSync 周期与偏移时刻
+         * @param vsync_num 目标 VSync 绝对序列号
          * @param offset 子帧时间点 (t0, t1, t2, t3)
          * @param task 具体的执行任务
          */
-        void submitTask(uint32_t frames_ahead, VSyncOffset offset, std::function<void()> task) {
-            provider_.scheduleTask(name_, frames_ahead, offset, std::move(task));
+        void submitTask(uint64_t vsync_num, VSyncOffset offset, std::function<void()> task) {
+            provider_.scheduleTask(name_, vsync_num, offset, std::move(task));
+        }
+
+        /**
+         * @brief 获取当前 VSync 计数和自上次 VSync 以来的微秒数
+         * @param out_vsync_num 输出当前的 VSync 序号
+         * @param out_us_offset 输出当前相对于 VSync 起点的微秒偏移
+         */
+        void getCurrentTime(uint64_t& out_vsync_num, uint64_t& out_us_offset) const {
+            provider_.getCurrentTime(out_vsync_num, out_us_offset);
         }
 
         const std::string& getName() const { return name_; }
@@ -78,19 +87,29 @@ public:
     }
 
     /**
+     * @brief 获取当前的 VSync 计数及当前的微秒偏移量
+     */
+    void getCurrentTime(uint64_t& vsync_num, uint64_t& us_offset) {
+        std::lock_guard<std::mutex> lock(mtx_);
+        vsync_num = current_frame_count_;
+        auto now = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - last_vsync_time_);
+        us_offset = duration.count();
+    }
+
+    /**
      * @brief 硬件驱动级调用：触发 VSync
      * 当底层的 DRM/VOP 产生 VSync 中断时，硬件驱动调用此函数。
-     * 这将释放当前帧绑定的所有延时任务。
      */
     void triggerHardwareVSync() {
         std::lock_guard<std::mutex> lock(mtx_);
-        if (!runtime_) return;
-
-        uint64_t current_target = current_frame_count_;
-        current_frame_count_++; // 推进全局帧计数器
+        last_vsync_time_ = std::chrono::steady_clock::now();
+        
+        uint64_t trigger_frame = current_frame_count_; // 当前被触发处理的任务帧号
+        current_frame_count_++; // 下一帧的基准
 
         // 查找当前帧是否有挂载的任务
-        auto it = frame_task_queues_.find(current_target);
+        auto it = frame_task_queues_.find(trigger_frame);
         if (it == frame_task_queues_.end()) return;
 
         // 取出当前帧的所有任务
@@ -126,11 +145,12 @@ private:
     ~VTimerProvider() = default;
     VTimerProvider(const VTimerProvider&) = delete;
 
-    void scheduleTask(const std::string& owner, uint32_t frames_ahead, VSyncOffset offset, std::function<void()> task) {
+    void scheduleTask(const std::string& owner, uint64_t vsync_num, VSyncOffset offset, std::function<void()> task) {
         std::lock_guard<std::mutex> lock(mtx_);
-        uint64_t target_frame = current_frame_count_ + frames_ahead;
-        
-        frame_task_queues_[target_frame].push_back({offset, std::move(task), owner});
+        // 只有目标帧号大于或等于当前正在处理/等待的帧时才有效
+        if (vsync_num >= current_frame_count_) {
+            frame_task_queues_[vsync_num].push_back({offset, std::move(task), owner});
+        }
     }
 
     SuOS::Runtime::suRuntime* runtime_;
@@ -138,6 +158,8 @@ private:
     
     // 全局自增帧计数器
     uint64_t current_frame_count_;
+    // 上一次 VSync 触发的任务时间点
+    std::chrono::steady_clock::time_point last_vsync_time_;
 
     // 核心存储表：帧号 -> 任务列表
     std::unordered_map<uint64_t, std::vector<VTask>> frame_task_queues_;

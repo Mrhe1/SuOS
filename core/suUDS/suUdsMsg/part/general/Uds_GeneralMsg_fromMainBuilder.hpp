@@ -1,13 +1,13 @@
 #pragma once
-#ifndef UDS_GENERALMSG_BUILDER_HPP
-#define UDS_GENERALMSG_BUILDER_HPP
-#include "GeneralMsg_generated.h"
+#ifndef UDS_GENERALMSG_FROMMAIN_BUILDER_HPP
+#define UDS_GENERALMSG_FROMMAIN_BUILDER_HPP
+#include "GeneralMsg_fromMain_generated.h"
 #include "suRuntime.hpp"
 #include <memory>
 #include <vector>
 #include <stdexcept>
 namespace SuOS::Uds::Msg::General {
-    class GeneralMsgBuilder {
+    class GeneralMsg_fromMainBuilder {
     public:
         class LockGuard {
         public:
@@ -17,34 +17,14 @@ namespace SuOS::Uds::Msg::General {
         private:
             flatbuffers::FlatBufferBuilder& _fbb;
         };
-        GeneralMsgBuilder(std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _runtime(runtime) {}
-        // 构建 Heartbeat 消息
-        LockGuard BuildHeartbeat() {
-            if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
-            fbb_.Clear();
-
-            auto table = CreateHeartbeat(fbb_);
-            auto root = CreateGeneralEnvelope(fbb_, GeneralPayload_Heartbeat, table.Union());
-            fbb_.Finish(root);
-            return LockGuard(fbb_);
-        }
+        GeneralMsg_fromMainBuilder(std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _runtime(runtime) {}
         // 构建 UsrStopRequest 消息
         LockGuard BuildUsrStopRequest() {
             if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
             fbb_.Clear();
 
             auto table = CreateUsrStopRequest(fbb_);
-            auto root = CreateGeneralEnvelope(fbb_, GeneralPayload_UsrStopRequest, table.Union());
-            fbb_.Finish(root);
-            return LockGuard(fbb_);
-        }
-        // 构建 UsrStopResponse 消息
-        LockGuard BuildUsrStopResponse() {
-            if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
-            fbb_.Clear();
-
-            auto table = CreateUsrStopResponse(fbb_);
-            auto root = CreateGeneralEnvelope(fbb_, GeneralPayload_UsrStopResponse, table.Union());
+            auto root = CreateGeneralEnvelope_fromMain(fbb_, GeneralPayload_fromMain_UsrStopRequest, table.Union());
             fbb_.Finish(root);
             return LockGuard(fbb_);
         }
@@ -54,7 +34,7 @@ namespace SuOS::Uds::Msg::General {
             fbb_.Clear();
 
             auto table = CreateUsrStopKill(fbb_);
-            auto root = CreateGeneralEnvelope(fbb_, GeneralPayload_UsrStopKill, table.Union());
+            auto root = CreateGeneralEnvelope_fromMain(fbb_, GeneralPayload_fromMain_UsrStopKill, table.Union());
             fbb_.Finish(root);
             return LockGuard(fbb_);
         }
