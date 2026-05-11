@@ -1,0 +1,14 @@
+namespace SuOS.Uds.Msg.Graphics;
+
+table RgaResponse {
+    job_id: uint32;
+    err_code: uint32;
+}
+
+union FromRgaPayload { RgaResponse }
+
+table FromRgaEnvelope {
+    payload: FromRgaPayload;
+}
+
+root_type FromRgaEnvelope;

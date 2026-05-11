@@ -21,5 +21,6 @@ CompileFlags:
     - "-I/home/hss/SuOS/core/Graphics/Vram"
     - "-I/home/hss/SuOS/core/Graphics/Vtimer"
     - "-I/home/hss/SuOS/core/Graphics/Rga/include"
+    - "-I/home/hss/SuOS/core/suUDS/suUdsMsg/part/graphics/rga"
   
   CompilationDatabase: "build"

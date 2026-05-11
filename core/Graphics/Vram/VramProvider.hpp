@@ -313,6 +313,37 @@ public:
         return buffer;
     }
 
+    std::shared_ptr<VBuffer> importBuffer(int dma_fd, uint32_t width, uint32_t height, int format, uint32_t pitch, size_t size) {
+        std::lock_guard<std::mutex> lock(usr_mtx_);
+
+        // 1. 发起 DRM Prime FD To Handle 请求来接管 FD
+        struct drm_prime_handle prime_req = {};
+        prime_req.fd = dma_fd;
+        uint32_t handle = 0;
+        
+        if (ioctl(drm_fd_, DRM_IOCTL_PRIME_FD_TO_HANDLE, &prime_req) < 0) {
+            std::cerr << "[VramUsr] Warning: Failed to import dma_fd " << dma_fd << " to DRM handle. Might be external buffer." << std::endl;
+        } else {
+            handle = prime_req.handle;
+        }
+
+        // 假设不需要 mmap(vaddr)，如果不涉及 CPU 渲染
+        void* vaddr = nullptr;
+
+        auto buffer = std::make_shared<VBuffer>(
+            drm_fd_, handle, dma_fd, 
+            width, height, pitch, size, vaddr, usr_name_ + "_imported"
+        );
+        
+        // 标记为外部导入，VBuffer 析构时如果没有 handle 会略过 destroy dumb
+        // 可以复用 setupWorkflow 等接口
+        buffer->setupWorkflow(0, {}, format);
+        
+        active_buffers_.push_back(buffer);
+        std::cout << "[VramUsr] Imported buffer for " << usr_name_ << " (FD: " << dma_fd << ")" << std::endl;
+        return buffer;
+    }
+
     void releaseAllBuffers() {
         std::lock_guard<std::mutex> lock(usr_mtx_);
         if (!active_buffers_.empty()) {

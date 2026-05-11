@@ -1,0 +1,46 @@
+namespace SuOS.Uds.Msg.Graphics;
+
+enum RgaStepType : byte {
+    COPY = 0, ROTATE, FILL, BLEND, OSD, RESIZE, CROP,
+    COLOR_CONVERT, FLIP, COMPOSITE, COLOR_KEY, MOSAIC, RECTANGLE
+}
+
+table RgaRequest {
+    job_id: uint32;
+    type: byte;
+    
+    src_fd: int;
+    src_w: int;
+    src_h: int;
+    src_fmt: int;
+    src_x: int;
+    src_y: int;
+
+    dst_fd: int;
+    dst_w: int;
+    dst_h: int;
+    dst_fmt: int;
+    dst_x: int;
+    dst_y: int;
+
+    pat_fd: int;
+    pat_w: int;
+    pat_h: int;
+    pat_fmt: int;
+    pat_x: int;
+    pat_y: int;
+
+    angle: int;
+    color: uint;
+    mode: int;
+    fx: double;
+    fy: double;
+}
+
+union ToRgaPayload { RgaRequest }
+
+table ToRgaEnvelope {
+    payload: ToRgaPayload;
+}
+
+root_type ToRgaEnvelope;
