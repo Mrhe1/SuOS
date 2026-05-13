@@ -1,46 +1,220 @@
 namespace SuOS.Uds.Msg.Graphics;
 
+/// RGA 任务类型枚举，与 RgaStepType 严格对应
 enum RgaStepType : byte {
-    COPY = 0, ROTATE, FILL, BLEND, OSD, RESIZE, CROP,
-    COLOR_CONVERT, FLIP, COMPOSITE, COLOR_KEY, MOSAIC, RECTANGLE
+    COPY = 0,
+    ROTATE,
+    FILL,
+    BLEND,
+    OSD,
+    RESIZE,
+    CROP,
+    COLOR_CONVERT,
+    FLIP,
+    COMPOSITE,
+    COLOR_KEY,
+    MOSAIC,
+    RECTANGLE,
+    FILL_ARRAY,
+    RECTANGLE_ARRAY,
+    MOSAIC_ARRAY
 }
 
-table RgaRequest {
-    job_id: uint32;
-    type: byte;
-    
-    src_fd: int;
-    src_w: int;
-    src_h: int;
-    src_fmt: int;
-    src_x: int;
-    src_y: int;
+/// 基础配置信息，对应 RgaConfig
+struct RgaConfig {
+    width: int;
+    height: int;
+    format: int;
+    x_offset: int;
+    y_offset: int;
+}
 
-    dst_fd: int;
-    dst_w: int;
-    dst_h: int;
-    dst_fmt: int;
-    dst_x: int;
-    dst_y: int;
+/// 矩形区域定义，对应 im_rect
+struct ImRect {
+    x: int;
+    y: int;
+    width: int;
+    height: int;
+}
 
-    pat_fd: int;
-    pat_w: int;
-    pat_h: int;
-    pat_fmt: int;
-    pat_x: int;
-    pat_y: int;
+/// OSD 配置信息，对应 im_osd_t
+struct ImOsd {
+    osd_mode: uint16;
+    block_size: uint16;
+    flags: uint32;
+    invert_config: uint16;
+    filter_config: uint16;
+}
 
+/// 颜色键范围定义，对应 im_colorkey_range
+struct ImColorKeyRange {
+    min: uint32;
+    max: uint32;
+}
+
+/// 拷贝任务：将 src 拷贝到 dst
+table RgaCopy {
+    src_fd: uint64;
+    dst_fd: uint64;
+    src_cfg: RgaConfig;
+    dst_cfg: RgaConfig;
+}
+
+/// 旋转任务：将 src 进行指定角度旋转后存入 dst
+table RgaRotate {
+    src_fd: uint64;
+    dst_fd: uint64;
+    src_cfg: RgaConfig;
+    dst_cfg: RgaConfig;
     angle: int;
-    color: uint;
+}
+
+/// 填充任务：使用指定颜色填充目标区域
+table RgaFill {
+    dst_fd: uint64;
+    dst_cfg: RgaConfig;
+    color: uint32;
+}
+
+/// Alpha 混合任务：将 src 混合到 dst
+table RgaBlend {
+    src_fd: uint64;
+    dst_fd: uint64;
+    src_cfg: RgaConfig;
+    dst_cfg: RgaConfig;
     mode: int;
+}
+
+/// OSD 叠加任务：将 src(osd) 叠加到 dst(bg)
+table RgaOsd {
+    src_fd: uint64;
+    dst_fd: uint64;
+    dst_cfg: RgaConfig; // 对应 addOsd 中的 osd_cfg_rect
+    osd_cfg: ImOsd;
+}
+
+/// 缩放任务：支持指定 X 和 Y 方向的缩放比例
+table RgaResize {
+    src_fd: uint64;
+    dst_fd: uint64;
+    src_cfg: RgaConfig;
+    dst_cfg: RgaConfig;
     fx: double;
     fy: double;
 }
 
-union ToRgaPayload { RgaRequest }
+/// 裁剪任务：从 src 中裁剪指定区域到 dst
+table RgaCrop {
+    src_fd: uint64;
+    dst_fd: uint64;
+    src_cfg: RgaConfig;
+    dst_cfg: RgaConfig;
+}
 
+/// 颜色空间转换任务
+table RgaConvert {
+    src_fd: uint64;
+    dst_fd: uint64;
+    src_cfg: RgaConfig;
+    dst_cfg: RgaConfig;
+    mode: int;
+}
+
+/// 翻转任务：水平或垂直翻转
+table RgaFlip {
+    src_fd: uint64;
+    dst_fd: uint64;
+    src_cfg: RgaConfig;
+    dst_cfg: RgaConfig;
+    mode: int;
+}
+
+/// 复合图像任务：处理前层 fg 和后层 bg 到 dst
+table RgaComposite {
+    fg_fd: uint64;
+    bg_fd: uint64;
+    dst_fd: uint64;
+    fg_cfg: RgaConfig;
+    bg_cfg: RgaConfig;
+    dst_cfg: RgaConfig;
+    mode: int;
+}
+
+/// 抠图任务（ColorKey）：根据颜色范围去除背景
+table RgaColorKey {
+    fg_fd: uint64;
+    bg_fd: uint64;
+    fg_cfg: RgaConfig;
+    bg_dst_cfg: RgaConfig;
+    range: ImColorKeyRange;
+    mode: int;
+}
+
+/// 马赛克任务：在目标区域应用马赛克
+table RgaMosaic {
+    dst_fd: uint64;
+    dst_cfg: RgaConfig;
+    mode: int; // mosaic_mode
+}
+
+/// 矩形绘制任务：绘制矩形框或填充矩形
+table RgaRectangle {
+    dst_fd: uint64;
+    dst_cfg: RgaConfig;
+    color: uint32;
+    thickness: int;
+}
+
+/// 填充数组任务：批量填充多个区域
+table RgaFillArray {
+    dst_fd: uint64;
+    dst_cfg: RgaConfig;
+    rects: [ImRect];
+    color: uint32;
+}
+
+/// 矩形绘制数组任务：批量绘制多个矩形
+table RgaRectangleArray {
+    dst_fd: uint64;
+    dst_cfg: RgaConfig;
+    rects: [ImRect];
+    color: uint32;
+    thickness: int;
+}
+
+/// 马赛克数组任务：批量在多个区域应用马赛克
+table RgaMosaicArray {
+    dst_fd: uint64;
+    dst_cfg: RgaConfig;
+    rects: [ImRect];
+    mode: int; // mosaic_mode
+}
+
+/// 统一负载 Union
+union ToRgaPayload { 
+    RgaCopy, 
+    RgaRotate, 
+    RgaFill, 
+    RgaBlend, 
+    RgaOsd, 
+    RgaResize, 
+    RgaCrop, 
+    RgaConvert, 
+    RgaFlip, 
+    RgaComposite, 
+    RgaColorKey, 
+    RgaMosaic, 
+    RgaRectangle,
+    RgaFillArray,
+    RgaRectangleArray,
+    RgaMosaicArray
+}
+
+/// 外部包装表
 table ToRgaEnvelope {
+    job_id: uint32;
     payload: ToRgaPayload;
 }
 
 root_type ToRgaEnvelope;
+

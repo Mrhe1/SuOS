@@ -18,12 +18,66 @@ namespace Uds {
 namespace Msg {
 namespace Graphics {
 
-struct RgaRequest;
-struct RgaRequestBuilder;
+struct RgaConfig;
+
+struct ImRect;
+
+struct ImOsd;
+
+struct ImColorKeyRange;
+
+struct RgaCopy;
+struct RgaCopyBuilder;
+
+struct RgaRotate;
+struct RgaRotateBuilder;
+
+struct RgaFill;
+struct RgaFillBuilder;
+
+struct RgaBlend;
+struct RgaBlendBuilder;
+
+struct RgaOsd;
+struct RgaOsdBuilder;
+
+struct RgaResize;
+struct RgaResizeBuilder;
+
+struct RgaCrop;
+struct RgaCropBuilder;
+
+struct RgaConvert;
+struct RgaConvertBuilder;
+
+struct RgaFlip;
+struct RgaFlipBuilder;
+
+struct RgaComposite;
+struct RgaCompositeBuilder;
+
+struct RgaColorKey;
+struct RgaColorKeyBuilder;
+
+struct RgaMosaic;
+struct RgaMosaicBuilder;
+
+struct RgaRectangle;
+struct RgaRectangleBuilder;
+
+struct RgaFillArray;
+struct RgaFillArrayBuilder;
+
+struct RgaRectangleArray;
+struct RgaRectangleArrayBuilder;
+
+struct RgaMosaicArray;
+struct RgaMosaicArrayBuilder;
 
 struct ToRgaEnvelope;
 struct ToRgaEnvelopeBuilder;
 
+/// RGA 任务类型枚举，与 RgaStepType 严格对应
 enum RgaStepType : int8_t {
   RgaStepType_COPY = 0,
   RgaStepType_ROTATE = 1,
@@ -38,11 +92,14 @@ enum RgaStepType : int8_t {
   RgaStepType_COLOR_KEY = 10,
   RgaStepType_MOSAIC = 11,
   RgaStepType_RECTANGLE = 12,
+  RgaStepType_FILL_ARRAY = 13,
+  RgaStepType_RECTANGLE_ARRAY = 14,
+  RgaStepType_MOSAIC_ARRAY = 15,
   RgaStepType_MIN = RgaStepType_COPY,
-  RgaStepType_MAX = RgaStepType_RECTANGLE
+  RgaStepType_MAX = RgaStepType_MOSAIC_ARRAY
 };
 
-inline const RgaStepType (&EnumValuesRgaStepType())[13] {
+inline const RgaStepType (&EnumValuesRgaStepType())[16] {
   static const RgaStepType values[] = {
     RgaStepType_COPY,
     RgaStepType_ROTATE,
@@ -56,13 +113,16 @@ inline const RgaStepType (&EnumValuesRgaStepType())[13] {
     RgaStepType_COMPOSITE,
     RgaStepType_COLOR_KEY,
     RgaStepType_MOSAIC,
-    RgaStepType_RECTANGLE
+    RgaStepType_RECTANGLE,
+    RgaStepType_FILL_ARRAY,
+    RgaStepType_RECTANGLE_ARRAY,
+    RgaStepType_MOSAIC_ARRAY
   };
   return values;
 }
 
 inline const char * const *EnumNamesRgaStepType() {
-  static const char * const names[14] = {
+  static const char * const names[17] = {
     "COPY",
     "ROTATE",
     "FILL",
@@ -76,43 +136,92 @@ inline const char * const *EnumNamesRgaStepType() {
     "COLOR_KEY",
     "MOSAIC",
     "RECTANGLE",
+    "FILL_ARRAY",
+    "RECTANGLE_ARRAY",
+    "MOSAIC_ARRAY",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameRgaStepType(RgaStepType e) {
-  if (::flatbuffers::IsOutRange(e, RgaStepType_COPY, RgaStepType_RECTANGLE)) return "";
+  if (::flatbuffers::IsOutRange(e, RgaStepType_COPY, RgaStepType_MOSAIC_ARRAY)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesRgaStepType()[index];
 }
 
+/// 统一负载 Union
 enum ToRgaPayload : uint8_t {
   ToRgaPayload_NONE = 0,
-  ToRgaPayload_RgaRequest = 1,
+  ToRgaPayload_RgaCopy = 1,
+  ToRgaPayload_RgaRotate = 2,
+  ToRgaPayload_RgaFill = 3,
+  ToRgaPayload_RgaBlend = 4,
+  ToRgaPayload_RgaOsd = 5,
+  ToRgaPayload_RgaResize = 6,
+  ToRgaPayload_RgaCrop = 7,
+  ToRgaPayload_RgaConvert = 8,
+  ToRgaPayload_RgaFlip = 9,
+  ToRgaPayload_RgaComposite = 10,
+  ToRgaPayload_RgaColorKey = 11,
+  ToRgaPayload_RgaMosaic = 12,
+  ToRgaPayload_RgaRectangle = 13,
+  ToRgaPayload_RgaFillArray = 14,
+  ToRgaPayload_RgaRectangleArray = 15,
+  ToRgaPayload_RgaMosaicArray = 16,
   ToRgaPayload_MIN = ToRgaPayload_NONE,
-  ToRgaPayload_MAX = ToRgaPayload_RgaRequest
+  ToRgaPayload_MAX = ToRgaPayload_RgaMosaicArray
 };
 
-inline const ToRgaPayload (&EnumValuesToRgaPayload())[2] {
+inline const ToRgaPayload (&EnumValuesToRgaPayload())[17] {
   static const ToRgaPayload values[] = {
     ToRgaPayload_NONE,
-    ToRgaPayload_RgaRequest
+    ToRgaPayload_RgaCopy,
+    ToRgaPayload_RgaRotate,
+    ToRgaPayload_RgaFill,
+    ToRgaPayload_RgaBlend,
+    ToRgaPayload_RgaOsd,
+    ToRgaPayload_RgaResize,
+    ToRgaPayload_RgaCrop,
+    ToRgaPayload_RgaConvert,
+    ToRgaPayload_RgaFlip,
+    ToRgaPayload_RgaComposite,
+    ToRgaPayload_RgaColorKey,
+    ToRgaPayload_RgaMosaic,
+    ToRgaPayload_RgaRectangle,
+    ToRgaPayload_RgaFillArray,
+    ToRgaPayload_RgaRectangleArray,
+    ToRgaPayload_RgaMosaicArray
   };
   return values;
 }
 
 inline const char * const *EnumNamesToRgaPayload() {
-  static const char * const names[3] = {
+  static const char * const names[18] = {
     "NONE",
-    "RgaRequest",
+    "RgaCopy",
+    "RgaRotate",
+    "RgaFill",
+    "RgaBlend",
+    "RgaOsd",
+    "RgaResize",
+    "RgaCrop",
+    "RgaConvert",
+    "RgaFlip",
+    "RgaComposite",
+    "RgaColorKey",
+    "RgaMosaic",
+    "RgaRectangle",
+    "RgaFillArray",
+    "RgaRectangleArray",
+    "RgaMosaicArray",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameToRgaPayload(ToRgaPayload e) {
-  if (::flatbuffers::IsOutRange(e, ToRgaPayload_NONE, ToRgaPayload_RgaRequest)) return "";
+  if (::flatbuffers::IsOutRange(e, ToRgaPayload_NONE, ToRgaPayload_RgaMosaicArray)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesToRgaPayload()[index];
 }
@@ -121,110 +230,609 @@ template<typename T> struct ToRgaPayloadTraits {
   static const ToRgaPayload enum_value = ToRgaPayload_NONE;
 };
 
-template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaRequest> {
-  static const ToRgaPayload enum_value = ToRgaPayload_RgaRequest;
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaCopy> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaCopy;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaRotate> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaRotate;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaFill> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaFill;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaBlend> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaBlend;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaOsd> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaOsd;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaResize> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaResize;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaCrop> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaCrop;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaConvert> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaConvert;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaFlip> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaFlip;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaComposite> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaComposite;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaColorKey> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaColorKey;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaMosaic> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaMosaic;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaRectangle> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaRectangle;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaFillArray> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaFillArray;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaRectangleArray> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaRectangleArray;
+};
+
+template<> struct ToRgaPayloadTraits<SuOS::Uds::Msg::Graphics::RgaMosaicArray> {
+  static const ToRgaPayload enum_value = ToRgaPayload_RgaMosaicArray;
 };
 
 bool VerifyToRgaPayload(::flatbuffers::Verifier &verifier, const void *obj, ToRgaPayload type);
 bool VerifyToRgaPayloadVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
 
-struct RgaRequest FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef RgaRequestBuilder Builder;
+/// 基础配置信息，对应 RgaConfig
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) RgaConfig FLATBUFFERS_FINAL_CLASS {
+ private:
+  int32_t width_;
+  int32_t height_;
+  int32_t format_;
+  int32_t x_offset_;
+  int32_t y_offset_;
+
+ public:
+  RgaConfig()
+      : width_(0),
+        height_(0),
+        format_(0),
+        x_offset_(0),
+        y_offset_(0) {
+  }
+  RgaConfig(int32_t _width, int32_t _height, int32_t _format, int32_t _x_offset, int32_t _y_offset)
+      : width_(::flatbuffers::EndianScalar(_width)),
+        height_(::flatbuffers::EndianScalar(_height)),
+        format_(::flatbuffers::EndianScalar(_format)),
+        x_offset_(::flatbuffers::EndianScalar(_x_offset)),
+        y_offset_(::flatbuffers::EndianScalar(_y_offset)) {
+  }
+  int32_t width() const {
+    return ::flatbuffers::EndianScalar(width_);
+  }
+  int32_t height() const {
+    return ::flatbuffers::EndianScalar(height_);
+  }
+  int32_t format() const {
+    return ::flatbuffers::EndianScalar(format_);
+  }
+  int32_t x_offset() const {
+    return ::flatbuffers::EndianScalar(x_offset_);
+  }
+  int32_t y_offset() const {
+    return ::flatbuffers::EndianScalar(y_offset_);
+  }
+};
+FLATBUFFERS_STRUCT_END(RgaConfig, 20);
+
+/// 矩形区域定义，对应 im_rect
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ImRect FLATBUFFERS_FINAL_CLASS {
+ private:
+  int32_t x_;
+  int32_t y_;
+  int32_t width_;
+  int32_t height_;
+
+ public:
+  ImRect()
+      : x_(0),
+        y_(0),
+        width_(0),
+        height_(0) {
+  }
+  ImRect(int32_t _x, int32_t _y, int32_t _width, int32_t _height)
+      : x_(::flatbuffers::EndianScalar(_x)),
+        y_(::flatbuffers::EndianScalar(_y)),
+        width_(::flatbuffers::EndianScalar(_width)),
+        height_(::flatbuffers::EndianScalar(_height)) {
+  }
+  int32_t x() const {
+    return ::flatbuffers::EndianScalar(x_);
+  }
+  int32_t y() const {
+    return ::flatbuffers::EndianScalar(y_);
+  }
+  int32_t width() const {
+    return ::flatbuffers::EndianScalar(width_);
+  }
+  int32_t height() const {
+    return ::flatbuffers::EndianScalar(height_);
+  }
+};
+FLATBUFFERS_STRUCT_END(ImRect, 16);
+
+/// OSD 配置信息，对应 im_osd_t
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ImOsd FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint16_t osd_mode_;
+  uint16_t block_size_;
+  uint32_t flags_;
+  uint16_t invert_config_;
+  uint16_t filter_config_;
+
+ public:
+  ImOsd()
+      : osd_mode_(0),
+        block_size_(0),
+        flags_(0),
+        invert_config_(0),
+        filter_config_(0) {
+  }
+  ImOsd(uint16_t _osd_mode, uint16_t _block_size, uint32_t _flags, uint16_t _invert_config, uint16_t _filter_config)
+      : osd_mode_(::flatbuffers::EndianScalar(_osd_mode)),
+        block_size_(::flatbuffers::EndianScalar(_block_size)),
+        flags_(::flatbuffers::EndianScalar(_flags)),
+        invert_config_(::flatbuffers::EndianScalar(_invert_config)),
+        filter_config_(::flatbuffers::EndianScalar(_filter_config)) {
+  }
+  uint16_t osd_mode() const {
+    return ::flatbuffers::EndianScalar(osd_mode_);
+  }
+  uint16_t block_size() const {
+    return ::flatbuffers::EndianScalar(block_size_);
+  }
+  uint32_t flags() const {
+    return ::flatbuffers::EndianScalar(flags_);
+  }
+  uint16_t invert_config() const {
+    return ::flatbuffers::EndianScalar(invert_config_);
+  }
+  uint16_t filter_config() const {
+    return ::flatbuffers::EndianScalar(filter_config_);
+  }
+};
+FLATBUFFERS_STRUCT_END(ImOsd, 12);
+
+/// 颜色键范围定义，对应 im_colorkey_range
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ImColorKeyRange FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t min_;
+  uint32_t max_;
+
+ public:
+  ImColorKeyRange()
+      : min_(0),
+        max_(0) {
+  }
+  ImColorKeyRange(uint32_t _min, uint32_t _max)
+      : min_(::flatbuffers::EndianScalar(_min)),
+        max_(::flatbuffers::EndianScalar(_max)) {
+  }
+  uint32_t min() const {
+    return ::flatbuffers::EndianScalar(min_);
+  }
+  uint32_t max() const {
+    return ::flatbuffers::EndianScalar(max_);
+  }
+};
+FLATBUFFERS_STRUCT_END(ImColorKeyRange, 8);
+
+/// 拷贝任务：将 src 拷贝到 dst
+struct RgaCopy FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaCopyBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_JOB_ID = 4,
-    VT_TYPE = 6,
-    VT_SRC_FD = 8,
-    VT_SRC_W = 10,
-    VT_SRC_H = 12,
-    VT_SRC_FMT = 14,
-    VT_SRC_X = 16,
-    VT_SRC_Y = 18,
-    VT_DST_FD = 20,
-    VT_DST_W = 22,
-    VT_DST_H = 24,
-    VT_DST_FMT = 26,
-    VT_DST_X = 28,
-    VT_DST_Y = 30,
-    VT_PAT_FD = 32,
-    VT_PAT_W = 34,
-    VT_PAT_H = 36,
-    VT_PAT_FMT = 38,
-    VT_PAT_X = 40,
-    VT_PAT_Y = 42,
-    VT_ANGLE = 44,
-    VT_COLOR = 46,
-    VT_MODE = 48,
-    VT_FX = 50,
-    VT_FY = 52
+    VT_SRC_FD = 4,
+    VT_DST_FD = 6,
+    VT_SRC_CFG = 8,
+    VT_DST_CFG = 10
   };
-  uint32_t job_id() const {
-    return GetField<uint32_t>(VT_JOB_ID, 0);
+  uint64_t src_fd() const {
+    return GetField<uint64_t>(VT_SRC_FD, 0);
   }
-  int8_t type() const {
-    return GetField<int8_t>(VT_TYPE, 0);
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
   }
-  int32_t src_fd() const {
-    return GetField<int32_t>(VT_SRC_FD, 0);
+  const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_SRC_CFG);
   }
-  int32_t src_w() const {
-    return GetField<int32_t>(VT_SRC_W, 0);
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
   }
-  int32_t src_h() const {
-    return GetField<int32_t>(VT_SRC_H, 0);
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_SRC_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_SRC_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           verifier.EndTable();
   }
-  int32_t src_fmt() const {
-    return GetField<int32_t>(VT_SRC_FMT, 0);
+};
+
+struct RgaCopyBuilder {
+  typedef RgaCopy Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_src_fd(uint64_t src_fd) {
+    fbb_.AddElement<uint64_t>(RgaCopy::VT_SRC_FD, src_fd, 0);
   }
-  int32_t src_x() const {
-    return GetField<int32_t>(VT_SRC_X, 0);
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaCopy::VT_DST_FD, dst_fd, 0);
   }
-  int32_t src_y() const {
-    return GetField<int32_t>(VT_SRC_Y, 0);
+  void add_src_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg) {
+    fbb_.AddStruct(RgaCopy::VT_SRC_CFG, src_cfg);
   }
-  int32_t dst_fd() const {
-    return GetField<int32_t>(VT_DST_FD, 0);
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaCopy::VT_DST_CFG, dst_cfg);
   }
-  int32_t dst_w() const {
-    return GetField<int32_t>(VT_DST_W, 0);
+  explicit RgaCopyBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
   }
-  int32_t dst_h() const {
-    return GetField<int32_t>(VT_DST_H, 0);
+  ::flatbuffers::Offset<RgaCopy> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaCopy>(end);
+    return o;
   }
-  int32_t dst_fmt() const {
-    return GetField<int32_t>(VT_DST_FMT, 0);
+};
+
+inline ::flatbuffers::Offset<RgaCopy> CreateRgaCopy(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t src_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr) {
+  RgaCopyBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_src_fd(src_fd);
+  builder_.add_dst_cfg(dst_cfg);
+  builder_.add_src_cfg(src_cfg);
+  return builder_.Finish();
+}
+
+/// 旋转任务：将 src 进行指定角度旋转后存入 dst
+struct RgaRotate FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaRotateBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SRC_FD = 4,
+    VT_DST_FD = 6,
+    VT_SRC_CFG = 8,
+    VT_DST_CFG = 10,
+    VT_ANGLE = 12
+  };
+  uint64_t src_fd() const {
+    return GetField<uint64_t>(VT_SRC_FD, 0);
   }
-  int32_t dst_x() const {
-    return GetField<int32_t>(VT_DST_X, 0);
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
   }
-  int32_t dst_y() const {
-    return GetField<int32_t>(VT_DST_Y, 0);
+  const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_SRC_CFG);
   }
-  int32_t pat_fd() const {
-    return GetField<int32_t>(VT_PAT_FD, 0);
-  }
-  int32_t pat_w() const {
-    return GetField<int32_t>(VT_PAT_W, 0);
-  }
-  int32_t pat_h() const {
-    return GetField<int32_t>(VT_PAT_H, 0);
-  }
-  int32_t pat_fmt() const {
-    return GetField<int32_t>(VT_PAT_FMT, 0);
-  }
-  int32_t pat_x() const {
-    return GetField<int32_t>(VT_PAT_X, 0);
-  }
-  int32_t pat_y() const {
-    return GetField<int32_t>(VT_PAT_Y, 0);
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
   }
   int32_t angle() const {
     return GetField<int32_t>(VT_ANGLE, 0);
   }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_SRC_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_SRC_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<int32_t>(verifier, VT_ANGLE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaRotateBuilder {
+  typedef RgaRotate Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_src_fd(uint64_t src_fd) {
+    fbb_.AddElement<uint64_t>(RgaRotate::VT_SRC_FD, src_fd, 0);
+  }
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaRotate::VT_DST_FD, dst_fd, 0);
+  }
+  void add_src_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg) {
+    fbb_.AddStruct(RgaRotate::VT_SRC_CFG, src_cfg);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaRotate::VT_DST_CFG, dst_cfg);
+  }
+  void add_angle(int32_t angle) {
+    fbb_.AddElement<int32_t>(RgaRotate::VT_ANGLE, angle, 0);
+  }
+  explicit RgaRotateBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaRotate> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaRotate>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaRotate> CreateRgaRotate(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t src_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    int32_t angle = 0) {
+  RgaRotateBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_src_fd(src_fd);
+  builder_.add_angle(angle);
+  builder_.add_dst_cfg(dst_cfg);
+  builder_.add_src_cfg(src_cfg);
+  return builder_.Finish();
+}
+
+/// 填充任务：使用指定颜色填充目标区域
+struct RgaFill FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaFillBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DST_FD = 4,
+    VT_DST_CFG = 6,
+    VT_COLOR = 8
+  };
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
   uint32_t color() const {
     return GetField<uint32_t>(VT_COLOR, 0);
   }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<uint32_t>(verifier, VT_COLOR, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaFillBuilder {
+  typedef RgaFill Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaFill::VT_DST_FD, dst_fd, 0);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaFill::VT_DST_CFG, dst_cfg);
+  }
+  void add_color(uint32_t color) {
+    fbb_.AddElement<uint32_t>(RgaFill::VT_COLOR, color, 0);
+  }
+  explicit RgaFillBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaFill> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaFill>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaFill> CreateRgaFill(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    uint32_t color = 0) {
+  RgaFillBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_color(color);
+  builder_.add_dst_cfg(dst_cfg);
+  return builder_.Finish();
+}
+
+/// Alpha 混合任务：将 src 混合到 dst
+struct RgaBlend FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaBlendBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SRC_FD = 4,
+    VT_DST_FD = 6,
+    VT_SRC_CFG = 8,
+    VT_DST_CFG = 10,
+    VT_MODE = 12
+  };
+  uint64_t src_fd() const {
+    return GetField<uint64_t>(VT_SRC_FD, 0);
+  }
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_SRC_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
   int32_t mode() const {
     return GetField<int32_t>(VT_MODE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_SRC_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_SRC_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<int32_t>(verifier, VT_MODE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaBlendBuilder {
+  typedef RgaBlend Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_src_fd(uint64_t src_fd) {
+    fbb_.AddElement<uint64_t>(RgaBlend::VT_SRC_FD, src_fd, 0);
+  }
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaBlend::VT_DST_FD, dst_fd, 0);
+  }
+  void add_src_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg) {
+    fbb_.AddStruct(RgaBlend::VT_SRC_CFG, src_cfg);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaBlend::VT_DST_CFG, dst_cfg);
+  }
+  void add_mode(int32_t mode) {
+    fbb_.AddElement<int32_t>(RgaBlend::VT_MODE, mode, 0);
+  }
+  explicit RgaBlendBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaBlend> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaBlend>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaBlend> CreateRgaBlend(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t src_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    int32_t mode = 0) {
+  RgaBlendBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_src_fd(src_fd);
+  builder_.add_mode(mode);
+  builder_.add_dst_cfg(dst_cfg);
+  builder_.add_src_cfg(src_cfg);
+  return builder_.Finish();
+}
+
+/// OSD 叠加任务：将 src(osd) 叠加到 dst(bg)
+struct RgaOsd FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaOsdBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SRC_FD = 4,
+    VT_DST_FD = 6,
+    VT_DST_CFG = 8,
+    VT_OSD_CFG = 10
+  };
+  uint64_t src_fd() const {
+    return GetField<uint64_t>(VT_SRC_FD, 0);
+  }
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::ImOsd *osd_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::ImOsd *>(VT_OSD_CFG);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_SRC_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::ImOsd>(verifier, VT_OSD_CFG, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaOsdBuilder {
+  typedef RgaOsd Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_src_fd(uint64_t src_fd) {
+    fbb_.AddElement<uint64_t>(RgaOsd::VT_SRC_FD, src_fd, 0);
+  }
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaOsd::VT_DST_FD, dst_fd, 0);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaOsd::VT_DST_CFG, dst_cfg);
+  }
+  void add_osd_cfg(const SuOS::Uds::Msg::Graphics::ImOsd *osd_cfg) {
+    fbb_.AddStruct(RgaOsd::VT_OSD_CFG, osd_cfg);
+  }
+  explicit RgaOsdBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaOsd> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaOsd>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaOsd> CreateRgaOsd(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t src_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::ImOsd *osd_cfg = nullptr) {
+  RgaOsdBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_src_fd(src_fd);
+  builder_.add_osd_cfg(osd_cfg);
+  builder_.add_dst_cfg(dst_cfg);
+  return builder_.Finish();
+}
+
+/// 缩放任务：支持指定 X 和 Y 方向的缩放比例
+struct RgaResize FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaResizeBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SRC_FD = 4,
+    VT_DST_FD = 6,
+    VT_SRC_CFG = 8,
+    VT_DST_CFG = 10,
+    VT_FX = 12,
+    VT_FY = 14
+  };
+  uint64_t src_fd() const {
+    return GetField<uint64_t>(VT_SRC_FD, 0);
+  }
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_SRC_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
   }
   double fx() const {
     return GetField<double>(VT_FX, 0.0);
@@ -234,187 +842,918 @@ struct RgaRequest FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_JOB_ID, 4) &&
-           VerifyField<int8_t>(verifier, VT_TYPE, 1) &&
-           VerifyField<int32_t>(verifier, VT_SRC_FD, 4) &&
-           VerifyField<int32_t>(verifier, VT_SRC_W, 4) &&
-           VerifyField<int32_t>(verifier, VT_SRC_H, 4) &&
-           VerifyField<int32_t>(verifier, VT_SRC_FMT, 4) &&
-           VerifyField<int32_t>(verifier, VT_SRC_X, 4) &&
-           VerifyField<int32_t>(verifier, VT_SRC_Y, 4) &&
-           VerifyField<int32_t>(verifier, VT_DST_FD, 4) &&
-           VerifyField<int32_t>(verifier, VT_DST_W, 4) &&
-           VerifyField<int32_t>(verifier, VT_DST_H, 4) &&
-           VerifyField<int32_t>(verifier, VT_DST_FMT, 4) &&
-           VerifyField<int32_t>(verifier, VT_DST_X, 4) &&
-           VerifyField<int32_t>(verifier, VT_DST_Y, 4) &&
-           VerifyField<int32_t>(verifier, VT_PAT_FD, 4) &&
-           VerifyField<int32_t>(verifier, VT_PAT_W, 4) &&
-           VerifyField<int32_t>(verifier, VT_PAT_H, 4) &&
-           VerifyField<int32_t>(verifier, VT_PAT_FMT, 4) &&
-           VerifyField<int32_t>(verifier, VT_PAT_X, 4) &&
-           VerifyField<int32_t>(verifier, VT_PAT_Y, 4) &&
-           VerifyField<int32_t>(verifier, VT_ANGLE, 4) &&
-           VerifyField<uint32_t>(verifier, VT_COLOR, 4) &&
-           VerifyField<int32_t>(verifier, VT_MODE, 4) &&
+           VerifyField<uint64_t>(verifier, VT_SRC_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_SRC_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
            VerifyField<double>(verifier, VT_FX, 8) &&
            VerifyField<double>(verifier, VT_FY, 8) &&
            verifier.EndTable();
   }
 };
 
-struct RgaRequestBuilder {
-  typedef RgaRequest Table;
+struct RgaResizeBuilder {
+  typedef RgaResize Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_job_id(uint32_t job_id) {
-    fbb_.AddElement<uint32_t>(RgaRequest::VT_JOB_ID, job_id, 0);
+  void add_src_fd(uint64_t src_fd) {
+    fbb_.AddElement<uint64_t>(RgaResize::VT_SRC_FD, src_fd, 0);
   }
-  void add_type(int8_t type) {
-    fbb_.AddElement<int8_t>(RgaRequest::VT_TYPE, type, 0);
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaResize::VT_DST_FD, dst_fd, 0);
   }
-  void add_src_fd(int32_t src_fd) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_SRC_FD, src_fd, 0);
+  void add_src_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg) {
+    fbb_.AddStruct(RgaResize::VT_SRC_CFG, src_cfg);
   }
-  void add_src_w(int32_t src_w) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_SRC_W, src_w, 0);
-  }
-  void add_src_h(int32_t src_h) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_SRC_H, src_h, 0);
-  }
-  void add_src_fmt(int32_t src_fmt) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_SRC_FMT, src_fmt, 0);
-  }
-  void add_src_x(int32_t src_x) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_SRC_X, src_x, 0);
-  }
-  void add_src_y(int32_t src_y) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_SRC_Y, src_y, 0);
-  }
-  void add_dst_fd(int32_t dst_fd) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_DST_FD, dst_fd, 0);
-  }
-  void add_dst_w(int32_t dst_w) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_DST_W, dst_w, 0);
-  }
-  void add_dst_h(int32_t dst_h) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_DST_H, dst_h, 0);
-  }
-  void add_dst_fmt(int32_t dst_fmt) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_DST_FMT, dst_fmt, 0);
-  }
-  void add_dst_x(int32_t dst_x) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_DST_X, dst_x, 0);
-  }
-  void add_dst_y(int32_t dst_y) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_DST_Y, dst_y, 0);
-  }
-  void add_pat_fd(int32_t pat_fd) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_PAT_FD, pat_fd, 0);
-  }
-  void add_pat_w(int32_t pat_w) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_PAT_W, pat_w, 0);
-  }
-  void add_pat_h(int32_t pat_h) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_PAT_H, pat_h, 0);
-  }
-  void add_pat_fmt(int32_t pat_fmt) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_PAT_FMT, pat_fmt, 0);
-  }
-  void add_pat_x(int32_t pat_x) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_PAT_X, pat_x, 0);
-  }
-  void add_pat_y(int32_t pat_y) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_PAT_Y, pat_y, 0);
-  }
-  void add_angle(int32_t angle) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_ANGLE, angle, 0);
-  }
-  void add_color(uint32_t color) {
-    fbb_.AddElement<uint32_t>(RgaRequest::VT_COLOR, color, 0);
-  }
-  void add_mode(int32_t mode) {
-    fbb_.AddElement<int32_t>(RgaRequest::VT_MODE, mode, 0);
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaResize::VT_DST_CFG, dst_cfg);
   }
   void add_fx(double fx) {
-    fbb_.AddElement<double>(RgaRequest::VT_FX, fx, 0.0);
+    fbb_.AddElement<double>(RgaResize::VT_FX, fx, 0.0);
   }
   void add_fy(double fy) {
-    fbb_.AddElement<double>(RgaRequest::VT_FY, fy, 0.0);
+    fbb_.AddElement<double>(RgaResize::VT_FY, fy, 0.0);
   }
-  explicit RgaRequestBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit RgaResizeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<RgaRequest> Finish() {
+  ::flatbuffers::Offset<RgaResize> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<RgaRequest>(end);
+    auto o = ::flatbuffers::Offset<RgaResize>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<RgaRequest> CreateRgaRequest(
+inline ::flatbuffers::Offset<RgaResize> CreateRgaResize(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t job_id = 0,
-    int8_t type = 0,
-    int32_t src_fd = 0,
-    int32_t src_w = 0,
-    int32_t src_h = 0,
-    int32_t src_fmt = 0,
-    int32_t src_x = 0,
-    int32_t src_y = 0,
-    int32_t dst_fd = 0,
-    int32_t dst_w = 0,
-    int32_t dst_h = 0,
-    int32_t dst_fmt = 0,
-    int32_t dst_x = 0,
-    int32_t dst_y = 0,
-    int32_t pat_fd = 0,
-    int32_t pat_w = 0,
-    int32_t pat_h = 0,
-    int32_t pat_fmt = 0,
-    int32_t pat_x = 0,
-    int32_t pat_y = 0,
-    int32_t angle = 0,
-    uint32_t color = 0,
-    int32_t mode = 0,
+    uint64_t src_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
     double fx = 0.0,
     double fy = 0.0) {
-  RgaRequestBuilder builder_(_fbb);
+  RgaResizeBuilder builder_(_fbb);
   builder_.add_fy(fy);
   builder_.add_fx(fx);
-  builder_.add_mode(mode);
-  builder_.add_color(color);
-  builder_.add_angle(angle);
-  builder_.add_pat_y(pat_y);
-  builder_.add_pat_x(pat_x);
-  builder_.add_pat_fmt(pat_fmt);
-  builder_.add_pat_h(pat_h);
-  builder_.add_pat_w(pat_w);
-  builder_.add_pat_fd(pat_fd);
-  builder_.add_dst_y(dst_y);
-  builder_.add_dst_x(dst_x);
-  builder_.add_dst_fmt(dst_fmt);
-  builder_.add_dst_h(dst_h);
-  builder_.add_dst_w(dst_w);
   builder_.add_dst_fd(dst_fd);
-  builder_.add_src_y(src_y);
-  builder_.add_src_x(src_x);
-  builder_.add_src_fmt(src_fmt);
-  builder_.add_src_h(src_h);
-  builder_.add_src_w(src_w);
   builder_.add_src_fd(src_fd);
-  builder_.add_job_id(job_id);
-  builder_.add_type(type);
+  builder_.add_dst_cfg(dst_cfg);
+  builder_.add_src_cfg(src_cfg);
   return builder_.Finish();
 }
 
+/// 裁剪任务：从 src 中裁剪指定区域到 dst
+struct RgaCrop FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaCropBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SRC_FD = 4,
+    VT_DST_FD = 6,
+    VT_SRC_CFG = 8,
+    VT_DST_CFG = 10
+  };
+  uint64_t src_fd() const {
+    return GetField<uint64_t>(VT_SRC_FD, 0);
+  }
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_SRC_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_SRC_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_SRC_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaCropBuilder {
+  typedef RgaCrop Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_src_fd(uint64_t src_fd) {
+    fbb_.AddElement<uint64_t>(RgaCrop::VT_SRC_FD, src_fd, 0);
+  }
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaCrop::VT_DST_FD, dst_fd, 0);
+  }
+  void add_src_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg) {
+    fbb_.AddStruct(RgaCrop::VT_SRC_CFG, src_cfg);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaCrop::VT_DST_CFG, dst_cfg);
+  }
+  explicit RgaCropBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaCrop> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaCrop>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaCrop> CreateRgaCrop(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t src_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr) {
+  RgaCropBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_src_fd(src_fd);
+  builder_.add_dst_cfg(dst_cfg);
+  builder_.add_src_cfg(src_cfg);
+  return builder_.Finish();
+}
+
+/// 颜色空间转换任务
+struct RgaConvert FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaConvertBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SRC_FD = 4,
+    VT_DST_FD = 6,
+    VT_SRC_CFG = 8,
+    VT_DST_CFG = 10,
+    VT_MODE = 12
+  };
+  uint64_t src_fd() const {
+    return GetField<uint64_t>(VT_SRC_FD, 0);
+  }
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_SRC_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  int32_t mode() const {
+    return GetField<int32_t>(VT_MODE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_SRC_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_SRC_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<int32_t>(verifier, VT_MODE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaConvertBuilder {
+  typedef RgaConvert Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_src_fd(uint64_t src_fd) {
+    fbb_.AddElement<uint64_t>(RgaConvert::VT_SRC_FD, src_fd, 0);
+  }
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaConvert::VT_DST_FD, dst_fd, 0);
+  }
+  void add_src_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg) {
+    fbb_.AddStruct(RgaConvert::VT_SRC_CFG, src_cfg);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaConvert::VT_DST_CFG, dst_cfg);
+  }
+  void add_mode(int32_t mode) {
+    fbb_.AddElement<int32_t>(RgaConvert::VT_MODE, mode, 0);
+  }
+  explicit RgaConvertBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaConvert> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaConvert>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaConvert> CreateRgaConvert(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t src_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    int32_t mode = 0) {
+  RgaConvertBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_src_fd(src_fd);
+  builder_.add_mode(mode);
+  builder_.add_dst_cfg(dst_cfg);
+  builder_.add_src_cfg(src_cfg);
+  return builder_.Finish();
+}
+
+/// 翻转任务：水平或垂直翻转
+struct RgaFlip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaFlipBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SRC_FD = 4,
+    VT_DST_FD = 6,
+    VT_SRC_CFG = 8,
+    VT_DST_CFG = 10,
+    VT_MODE = 12
+  };
+  uint64_t src_fd() const {
+    return GetField<uint64_t>(VT_SRC_FD, 0);
+  }
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_SRC_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  int32_t mode() const {
+    return GetField<int32_t>(VT_MODE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_SRC_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_SRC_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<int32_t>(verifier, VT_MODE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaFlipBuilder {
+  typedef RgaFlip Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_src_fd(uint64_t src_fd) {
+    fbb_.AddElement<uint64_t>(RgaFlip::VT_SRC_FD, src_fd, 0);
+  }
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaFlip::VT_DST_FD, dst_fd, 0);
+  }
+  void add_src_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg) {
+    fbb_.AddStruct(RgaFlip::VT_SRC_CFG, src_cfg);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaFlip::VT_DST_CFG, dst_cfg);
+  }
+  void add_mode(int32_t mode) {
+    fbb_.AddElement<int32_t>(RgaFlip::VT_MODE, mode, 0);
+  }
+  explicit RgaFlipBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaFlip> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaFlip>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaFlip> CreateRgaFlip(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t src_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *src_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    int32_t mode = 0) {
+  RgaFlipBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_src_fd(src_fd);
+  builder_.add_mode(mode);
+  builder_.add_dst_cfg(dst_cfg);
+  builder_.add_src_cfg(src_cfg);
+  return builder_.Finish();
+}
+
+/// 复合图像任务：处理前层 fg 和后层 bg 到 dst
+struct RgaComposite FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaCompositeBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FG_FD = 4,
+    VT_BG_FD = 6,
+    VT_DST_FD = 8,
+    VT_FG_CFG = 10,
+    VT_BG_CFG = 12,
+    VT_DST_CFG = 14,
+    VT_MODE = 16
+  };
+  uint64_t fg_fd() const {
+    return GetField<uint64_t>(VT_FG_FD, 0);
+  }
+  uint64_t bg_fd() const {
+    return GetField<uint64_t>(VT_BG_FD, 0);
+  }
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *fg_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_FG_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *bg_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_BG_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  int32_t mode() const {
+    return GetField<int32_t>(VT_MODE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_FG_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_BG_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_FG_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_BG_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<int32_t>(verifier, VT_MODE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaCompositeBuilder {
+  typedef RgaComposite Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_fg_fd(uint64_t fg_fd) {
+    fbb_.AddElement<uint64_t>(RgaComposite::VT_FG_FD, fg_fd, 0);
+  }
+  void add_bg_fd(uint64_t bg_fd) {
+    fbb_.AddElement<uint64_t>(RgaComposite::VT_BG_FD, bg_fd, 0);
+  }
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaComposite::VT_DST_FD, dst_fd, 0);
+  }
+  void add_fg_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *fg_cfg) {
+    fbb_.AddStruct(RgaComposite::VT_FG_CFG, fg_cfg);
+  }
+  void add_bg_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *bg_cfg) {
+    fbb_.AddStruct(RgaComposite::VT_BG_CFG, bg_cfg);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaComposite::VT_DST_CFG, dst_cfg);
+  }
+  void add_mode(int32_t mode) {
+    fbb_.AddElement<int32_t>(RgaComposite::VT_MODE, mode, 0);
+  }
+  explicit RgaCompositeBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaComposite> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaComposite>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaComposite> CreateRgaComposite(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t fg_fd = 0,
+    uint64_t bg_fd = 0,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *fg_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *bg_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    int32_t mode = 0) {
+  RgaCompositeBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_bg_fd(bg_fd);
+  builder_.add_fg_fd(fg_fd);
+  builder_.add_mode(mode);
+  builder_.add_dst_cfg(dst_cfg);
+  builder_.add_bg_cfg(bg_cfg);
+  builder_.add_fg_cfg(fg_cfg);
+  return builder_.Finish();
+}
+
+/// 抠图任务（ColorKey）：根据颜色范围去除背景
+struct RgaColorKey FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaColorKeyBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_FG_FD = 4,
+    VT_BG_FD = 6,
+    VT_FG_CFG = 8,
+    VT_BG_DST_CFG = 10,
+    VT_RANGE = 12,
+    VT_MODE = 14
+  };
+  uint64_t fg_fd() const {
+    return GetField<uint64_t>(VT_FG_FD, 0);
+  }
+  uint64_t bg_fd() const {
+    return GetField<uint64_t>(VT_BG_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *fg_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_FG_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *bg_dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_BG_DST_CFG);
+  }
+  const SuOS::Uds::Msg::Graphics::ImColorKeyRange *range() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::ImColorKeyRange *>(VT_RANGE);
+  }
+  int32_t mode() const {
+    return GetField<int32_t>(VT_MODE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_FG_FD, 8) &&
+           VerifyField<uint64_t>(verifier, VT_BG_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_FG_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_BG_DST_CFG, 4) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::ImColorKeyRange>(verifier, VT_RANGE, 4) &&
+           VerifyField<int32_t>(verifier, VT_MODE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaColorKeyBuilder {
+  typedef RgaColorKey Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_fg_fd(uint64_t fg_fd) {
+    fbb_.AddElement<uint64_t>(RgaColorKey::VT_FG_FD, fg_fd, 0);
+  }
+  void add_bg_fd(uint64_t bg_fd) {
+    fbb_.AddElement<uint64_t>(RgaColorKey::VT_BG_FD, bg_fd, 0);
+  }
+  void add_fg_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *fg_cfg) {
+    fbb_.AddStruct(RgaColorKey::VT_FG_CFG, fg_cfg);
+  }
+  void add_bg_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *bg_dst_cfg) {
+    fbb_.AddStruct(RgaColorKey::VT_BG_DST_CFG, bg_dst_cfg);
+  }
+  void add_range(const SuOS::Uds::Msg::Graphics::ImColorKeyRange *range) {
+    fbb_.AddStruct(RgaColorKey::VT_RANGE, range);
+  }
+  void add_mode(int32_t mode) {
+    fbb_.AddElement<int32_t>(RgaColorKey::VT_MODE, mode, 0);
+  }
+  explicit RgaColorKeyBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaColorKey> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaColorKey>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaColorKey> CreateRgaColorKey(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t fg_fd = 0,
+    uint64_t bg_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *fg_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *bg_dst_cfg = nullptr,
+    const SuOS::Uds::Msg::Graphics::ImColorKeyRange *range = nullptr,
+    int32_t mode = 0) {
+  RgaColorKeyBuilder builder_(_fbb);
+  builder_.add_bg_fd(bg_fd);
+  builder_.add_fg_fd(fg_fd);
+  builder_.add_mode(mode);
+  builder_.add_range(range);
+  builder_.add_bg_dst_cfg(bg_dst_cfg);
+  builder_.add_fg_cfg(fg_cfg);
+  return builder_.Finish();
+}
+
+/// 马赛克任务：在目标区域应用马赛克
+struct RgaMosaic FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaMosaicBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DST_FD = 4,
+    VT_DST_CFG = 6,
+    VT_MODE = 8
+  };
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  int32_t mode() const {
+    return GetField<int32_t>(VT_MODE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<int32_t>(verifier, VT_MODE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaMosaicBuilder {
+  typedef RgaMosaic Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaMosaic::VT_DST_FD, dst_fd, 0);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaMosaic::VT_DST_CFG, dst_cfg);
+  }
+  void add_mode(int32_t mode) {
+    fbb_.AddElement<int32_t>(RgaMosaic::VT_MODE, mode, 0);
+  }
+  explicit RgaMosaicBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaMosaic> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaMosaic>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaMosaic> CreateRgaMosaic(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    int32_t mode = 0) {
+  RgaMosaicBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_mode(mode);
+  builder_.add_dst_cfg(dst_cfg);
+  return builder_.Finish();
+}
+
+/// 矩形绘制任务：绘制矩形框或填充矩形
+struct RgaRectangle FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaRectangleBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DST_FD = 4,
+    VT_DST_CFG = 6,
+    VT_COLOR = 8,
+    VT_THICKNESS = 10
+  };
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  uint32_t color() const {
+    return GetField<uint32_t>(VT_COLOR, 0);
+  }
+  int32_t thickness() const {
+    return GetField<int32_t>(VT_THICKNESS, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyField<uint32_t>(verifier, VT_COLOR, 4) &&
+           VerifyField<int32_t>(verifier, VT_THICKNESS, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaRectangleBuilder {
+  typedef RgaRectangle Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaRectangle::VT_DST_FD, dst_fd, 0);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaRectangle::VT_DST_CFG, dst_cfg);
+  }
+  void add_color(uint32_t color) {
+    fbb_.AddElement<uint32_t>(RgaRectangle::VT_COLOR, color, 0);
+  }
+  void add_thickness(int32_t thickness) {
+    fbb_.AddElement<int32_t>(RgaRectangle::VT_THICKNESS, thickness, 0);
+  }
+  explicit RgaRectangleBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaRectangle> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaRectangle>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaRectangle> CreateRgaRectangle(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    uint32_t color = 0,
+    int32_t thickness = 0) {
+  RgaRectangleBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_thickness(thickness);
+  builder_.add_color(color);
+  builder_.add_dst_cfg(dst_cfg);
+  return builder_.Finish();
+}
+
+/// 填充数组任务：批量填充多个区域
+struct RgaFillArray FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaFillArrayBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DST_FD = 4,
+    VT_DST_CFG = 6,
+    VT_RECTS = 8,
+    VT_COLOR = 10
+  };
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  const ::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *> *rects() const {
+    return GetPointer<const ::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *> *>(VT_RECTS);
+  }
+  uint32_t color() const {
+    return GetField<uint32_t>(VT_COLOR, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyOffset(verifier, VT_RECTS) &&
+           verifier.VerifyVector(rects()) &&
+           VerifyField<uint32_t>(verifier, VT_COLOR, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaFillArrayBuilder {
+  typedef RgaFillArray Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaFillArray::VT_DST_FD, dst_fd, 0);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaFillArray::VT_DST_CFG, dst_cfg);
+  }
+  void add_rects(::flatbuffers::Offset<::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *>> rects) {
+    fbb_.AddOffset(RgaFillArray::VT_RECTS, rects);
+  }
+  void add_color(uint32_t color) {
+    fbb_.AddElement<uint32_t>(RgaFillArray::VT_COLOR, color, 0);
+  }
+  explicit RgaFillArrayBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaFillArray> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaFillArray>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaFillArray> CreateRgaFillArray(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *>> rects = 0,
+    uint32_t color = 0) {
+  RgaFillArrayBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_color(color);
+  builder_.add_rects(rects);
+  builder_.add_dst_cfg(dst_cfg);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<RgaFillArray> CreateRgaFillArrayDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    const std::vector<SuOS::Uds::Msg::Graphics::ImRect> *rects = nullptr,
+    uint32_t color = 0) {
+  auto rects__ = rects ? _fbb.CreateVectorOfStructs<SuOS::Uds::Msg::Graphics::ImRect>(*rects) : 0;
+  return SuOS::Uds::Msg::Graphics::CreateRgaFillArray(
+      _fbb,
+      dst_fd,
+      dst_cfg,
+      rects__,
+      color);
+}
+
+/// 矩形绘制数组任务：批量绘制多个矩形
+struct RgaRectangleArray FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaRectangleArrayBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DST_FD = 4,
+    VT_DST_CFG = 6,
+    VT_RECTS = 8,
+    VT_COLOR = 10,
+    VT_THICKNESS = 12
+  };
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  const ::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *> *rects() const {
+    return GetPointer<const ::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *> *>(VT_RECTS);
+  }
+  uint32_t color() const {
+    return GetField<uint32_t>(VT_COLOR, 0);
+  }
+  int32_t thickness() const {
+    return GetField<int32_t>(VT_THICKNESS, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyOffset(verifier, VT_RECTS) &&
+           verifier.VerifyVector(rects()) &&
+           VerifyField<uint32_t>(verifier, VT_COLOR, 4) &&
+           VerifyField<int32_t>(verifier, VT_THICKNESS, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaRectangleArrayBuilder {
+  typedef RgaRectangleArray Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaRectangleArray::VT_DST_FD, dst_fd, 0);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaRectangleArray::VT_DST_CFG, dst_cfg);
+  }
+  void add_rects(::flatbuffers::Offset<::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *>> rects) {
+    fbb_.AddOffset(RgaRectangleArray::VT_RECTS, rects);
+  }
+  void add_color(uint32_t color) {
+    fbb_.AddElement<uint32_t>(RgaRectangleArray::VT_COLOR, color, 0);
+  }
+  void add_thickness(int32_t thickness) {
+    fbb_.AddElement<int32_t>(RgaRectangleArray::VT_THICKNESS, thickness, 0);
+  }
+  explicit RgaRectangleArrayBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaRectangleArray> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaRectangleArray>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaRectangleArray> CreateRgaRectangleArray(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *>> rects = 0,
+    uint32_t color = 0,
+    int32_t thickness = 0) {
+  RgaRectangleArrayBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_thickness(thickness);
+  builder_.add_color(color);
+  builder_.add_rects(rects);
+  builder_.add_dst_cfg(dst_cfg);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<RgaRectangleArray> CreateRgaRectangleArrayDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    const std::vector<SuOS::Uds::Msg::Graphics::ImRect> *rects = nullptr,
+    uint32_t color = 0,
+    int32_t thickness = 0) {
+  auto rects__ = rects ? _fbb.CreateVectorOfStructs<SuOS::Uds::Msg::Graphics::ImRect>(*rects) : 0;
+  return SuOS::Uds::Msg::Graphics::CreateRgaRectangleArray(
+      _fbb,
+      dst_fd,
+      dst_cfg,
+      rects__,
+      color,
+      thickness);
+}
+
+/// 马赛克数组任务：批量在多个区域应用马赛克
+struct RgaMosaicArray FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef RgaMosaicArrayBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_DST_FD = 4,
+    VT_DST_CFG = 6,
+    VT_RECTS = 8,
+    VT_MODE = 10
+  };
+  uint64_t dst_fd() const {
+    return GetField<uint64_t>(VT_DST_FD, 0);
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg() const {
+    return GetStruct<const SuOS::Uds::Msg::Graphics::RgaConfig *>(VT_DST_CFG);
+  }
+  const ::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *> *rects() const {
+    return GetPointer<const ::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *> *>(VT_RECTS);
+  }
+  int32_t mode() const {
+    return GetField<int32_t>(VT_MODE, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_DST_FD, 8) &&
+           VerifyField<SuOS::Uds::Msg::Graphics::RgaConfig>(verifier, VT_DST_CFG, 4) &&
+           VerifyOffset(verifier, VT_RECTS) &&
+           verifier.VerifyVector(rects()) &&
+           VerifyField<int32_t>(verifier, VT_MODE, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct RgaMosaicArrayBuilder {
+  typedef RgaMosaicArray Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_dst_fd(uint64_t dst_fd) {
+    fbb_.AddElement<uint64_t>(RgaMosaicArray::VT_DST_FD, dst_fd, 0);
+  }
+  void add_dst_cfg(const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg) {
+    fbb_.AddStruct(RgaMosaicArray::VT_DST_CFG, dst_cfg);
+  }
+  void add_rects(::flatbuffers::Offset<::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *>> rects) {
+    fbb_.AddOffset(RgaMosaicArray::VT_RECTS, rects);
+  }
+  void add_mode(int32_t mode) {
+    fbb_.AddElement<int32_t>(RgaMosaicArray::VT_MODE, mode, 0);
+  }
+  explicit RgaMosaicArrayBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<RgaMosaicArray> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<RgaMosaicArray>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<RgaMosaicArray> CreateRgaMosaicArray(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const SuOS::Uds::Msg::Graphics::ImRect *>> rects = 0,
+    int32_t mode = 0) {
+  RgaMosaicArrayBuilder builder_(_fbb);
+  builder_.add_dst_fd(dst_fd);
+  builder_.add_mode(mode);
+  builder_.add_rects(rects);
+  builder_.add_dst_cfg(dst_cfg);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<RgaMosaicArray> CreateRgaMosaicArrayDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t dst_fd = 0,
+    const SuOS::Uds::Msg::Graphics::RgaConfig *dst_cfg = nullptr,
+    const std::vector<SuOS::Uds::Msg::Graphics::ImRect> *rects = nullptr,
+    int32_t mode = 0) {
+  auto rects__ = rects ? _fbb.CreateVectorOfStructs<SuOS::Uds::Msg::Graphics::ImRect>(*rects) : 0;
+  return SuOS::Uds::Msg::Graphics::CreateRgaMosaicArray(
+      _fbb,
+      dst_fd,
+      dst_cfg,
+      rects__,
+      mode);
+}
+
+/// 外部包装表
 struct ToRgaEnvelope FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ToRgaEnvelopeBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PAYLOAD_TYPE = 4,
-    VT_PAYLOAD = 6
+    VT_JOB_ID = 4,
+    VT_PAYLOAD_TYPE = 6,
+    VT_PAYLOAD = 8
   };
+  uint32_t job_id() const {
+    return GetField<uint32_t>(VT_JOB_ID, 0);
+  }
   SuOS::Uds::Msg::Graphics::ToRgaPayload payload_type() const {
     return static_cast<SuOS::Uds::Msg::Graphics::ToRgaPayload>(GetField<uint8_t>(VT_PAYLOAD_TYPE, 0));
   }
@@ -422,11 +1761,57 @@ struct ToRgaEnvelope FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     return GetPointer<const void *>(VT_PAYLOAD);
   }
   template<typename T> const T *payload_as() const;
-  const SuOS::Uds::Msg::Graphics::RgaRequest *payload_as_RgaRequest() const {
-    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaRequest ? static_cast<const SuOS::Uds::Msg::Graphics::RgaRequest *>(payload()) : nullptr;
+  const SuOS::Uds::Msg::Graphics::RgaCopy *payload_as_RgaCopy() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaCopy ? static_cast<const SuOS::Uds::Msg::Graphics::RgaCopy *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaRotate *payload_as_RgaRotate() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaRotate ? static_cast<const SuOS::Uds::Msg::Graphics::RgaRotate *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaFill *payload_as_RgaFill() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaFill ? static_cast<const SuOS::Uds::Msg::Graphics::RgaFill *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaBlend *payload_as_RgaBlend() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaBlend ? static_cast<const SuOS::Uds::Msg::Graphics::RgaBlend *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaOsd *payload_as_RgaOsd() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaOsd ? static_cast<const SuOS::Uds::Msg::Graphics::RgaOsd *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaResize *payload_as_RgaResize() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaResize ? static_cast<const SuOS::Uds::Msg::Graphics::RgaResize *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaCrop *payload_as_RgaCrop() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaCrop ? static_cast<const SuOS::Uds::Msg::Graphics::RgaCrop *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaConvert *payload_as_RgaConvert() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaConvert ? static_cast<const SuOS::Uds::Msg::Graphics::RgaConvert *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaFlip *payload_as_RgaFlip() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaFlip ? static_cast<const SuOS::Uds::Msg::Graphics::RgaFlip *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaComposite *payload_as_RgaComposite() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaComposite ? static_cast<const SuOS::Uds::Msg::Graphics::RgaComposite *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaColorKey *payload_as_RgaColorKey() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaColorKey ? static_cast<const SuOS::Uds::Msg::Graphics::RgaColorKey *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaMosaic *payload_as_RgaMosaic() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaMosaic ? static_cast<const SuOS::Uds::Msg::Graphics::RgaMosaic *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaRectangle *payload_as_RgaRectangle() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaRectangle ? static_cast<const SuOS::Uds::Msg::Graphics::RgaRectangle *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaFillArray *payload_as_RgaFillArray() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaFillArray ? static_cast<const SuOS::Uds::Msg::Graphics::RgaFillArray *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaRectangleArray *payload_as_RgaRectangleArray() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaRectangleArray ? static_cast<const SuOS::Uds::Msg::Graphics::RgaRectangleArray *>(payload()) : nullptr;
+  }
+  const SuOS::Uds::Msg::Graphics::RgaMosaicArray *payload_as_RgaMosaicArray() const {
+    return payload_type() == SuOS::Uds::Msg::Graphics::ToRgaPayload_RgaMosaicArray ? static_cast<const SuOS::Uds::Msg::Graphics::RgaMosaicArray *>(payload()) : nullptr;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_JOB_ID, 4) &&
            VerifyField<uint8_t>(verifier, VT_PAYLOAD_TYPE, 1) &&
            VerifyOffset(verifier, VT_PAYLOAD) &&
            VerifyToRgaPayload(verifier, payload(), payload_type()) &&
@@ -434,14 +1819,77 @@ struct ToRgaEnvelope FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
 };
 
-template<> inline const SuOS::Uds::Msg::Graphics::RgaRequest *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaRequest>() const {
-  return payload_as_RgaRequest();
+template<> inline const SuOS::Uds::Msg::Graphics::RgaCopy *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaCopy>() const {
+  return payload_as_RgaCopy();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaRotate *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaRotate>() const {
+  return payload_as_RgaRotate();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaFill *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaFill>() const {
+  return payload_as_RgaFill();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaBlend *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaBlend>() const {
+  return payload_as_RgaBlend();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaOsd *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaOsd>() const {
+  return payload_as_RgaOsd();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaResize *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaResize>() const {
+  return payload_as_RgaResize();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaCrop *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaCrop>() const {
+  return payload_as_RgaCrop();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaConvert *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaConvert>() const {
+  return payload_as_RgaConvert();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaFlip *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaFlip>() const {
+  return payload_as_RgaFlip();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaComposite *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaComposite>() const {
+  return payload_as_RgaComposite();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaColorKey *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaColorKey>() const {
+  return payload_as_RgaColorKey();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaMosaic *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaMosaic>() const {
+  return payload_as_RgaMosaic();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaRectangle *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaRectangle>() const {
+  return payload_as_RgaRectangle();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaFillArray *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaFillArray>() const {
+  return payload_as_RgaFillArray();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaRectangleArray *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaRectangleArray>() const {
+  return payload_as_RgaRectangleArray();
+}
+
+template<> inline const SuOS::Uds::Msg::Graphics::RgaMosaicArray *ToRgaEnvelope::payload_as<SuOS::Uds::Msg::Graphics::RgaMosaicArray>() const {
+  return payload_as_RgaMosaicArray();
 }
 
 struct ToRgaEnvelopeBuilder {
   typedef ToRgaEnvelope Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
+  void add_job_id(uint32_t job_id) {
+    fbb_.AddElement<uint32_t>(ToRgaEnvelope::VT_JOB_ID, job_id, 0);
+  }
   void add_payload_type(SuOS::Uds::Msg::Graphics::ToRgaPayload payload_type) {
     fbb_.AddElement<uint8_t>(ToRgaEnvelope::VT_PAYLOAD_TYPE, static_cast<uint8_t>(payload_type), 0);
   }
@@ -461,10 +1909,12 @@ struct ToRgaEnvelopeBuilder {
 
 inline ::flatbuffers::Offset<ToRgaEnvelope> CreateToRgaEnvelope(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t job_id = 0,
     SuOS::Uds::Msg::Graphics::ToRgaPayload payload_type = SuOS::Uds::Msg::Graphics::ToRgaPayload_NONE,
     ::flatbuffers::Offset<void> payload = 0) {
   ToRgaEnvelopeBuilder builder_(_fbb);
   builder_.add_payload(payload);
+  builder_.add_job_id(job_id);
   builder_.add_payload_type(payload_type);
   return builder_.Finish();
 }
@@ -474,8 +1924,68 @@ inline bool VerifyToRgaPayload(::flatbuffers::Verifier &verifier, const void *ob
     case ToRgaPayload_NONE: {
       return true;
     }
-    case ToRgaPayload_RgaRequest: {
-      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaRequest *>(obj);
+    case ToRgaPayload_RgaCopy: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaCopy *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaRotate: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaRotate *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaFill: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaFill *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaBlend: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaBlend *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaOsd: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaOsd *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaResize: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaResize *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaCrop: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaCrop *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaConvert: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaConvert *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaFlip: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaFlip *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaComposite: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaComposite *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaColorKey: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaColorKey *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaMosaic: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaMosaic *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaRectangle: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaRectangle *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaFillArray: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaFillArray *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaRectangleArray: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaRectangleArray *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case ToRgaPayload_RgaMosaicArray: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Graphics::RgaMosaicArray *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;
