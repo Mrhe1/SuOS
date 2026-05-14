@@ -17,17 +17,132 @@ public:
         : _runtime(runtime), _send_cb(send_cb), _builder(runtime) 
     {
         GraphicsMsg_ToRgaParser::Callbacks cbs;
-        cbs.onRgaRequest = [this](uint32_t job_id, int8_t type, 
-                                  int src_fd, int src_w, int src_h, int src_fmt, int src_x, int src_y,
-                                  int dst_fd, int dst_w, int dst_h, int dst_fmt, int dst_x, int dst_y,
-                                  int pat_fd, int pat_w, int pat_h, int pat_fmt, int pat_x, int pat_y,
-                                  int angle, uint32_t color, int mode, double fx, double fy) 
-        {
-            this->handleRgaRequest(job_id, type, src_fd, src_w, src_h, src_fmt, src_x, src_y,
-                                   dst_fd, dst_w, dst_h, dst_fmt, dst_x, dst_y,
-                                   pat_fd, pat_w, pat_h, pat_fmt, pat_x, pat_y,
-                                   angle, color, mode, fx, fy);
+        cbs.onRgaCopy = [this](uint32_t job_id, uint64_t src_fd, uint64_t dst_fd, RgaConfig src_cfg, RgaConfig dst_cfg) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addCopy(s, d, 
+                    {src_cfg.width(), src_cfg.height(), src_cfg.format(), src_cfg.offset_x(), src_cfg.offset_y()},
+                    {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()});
+            }, src_fd, dst_fd, -1, src_cfg, dst_cfg, {});
         };
+        cbs.onRgaRotate = [this](uint32_t job_id, uint64_t src_fd, uint64_t dst_fd, RgaConfig src_cfg, RgaConfig dst_cfg, int angle) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addRotate(s, d, 
+                    {src_cfg.width(), src_cfg.height(), src_cfg.format(), src_cfg.offset_x(), src_cfg.offset_y()},
+                    {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, angle);
+            }, src_fd, dst_fd, -1, src_cfg, dst_cfg, {});
+        };
+        cbs.onRgaFill = [this](uint32_t job_id, uint64_t dst_fd, RgaConfig dst_cfg, uint32_t color) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addFill(d, {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, color);
+            }, -1, dst_fd, -1, {}, dst_cfg, {});
+        };
+        cbs.onRgaBlend = [this](uint32_t job_id, uint64_t src_fd, uint64_t dst_fd, RgaConfig src_cfg, RgaConfig dst_cfg, int mode) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addBlend(s, d, 
+                    {src_cfg.width(), src_cfg.height(), src_cfg.format(), src_cfg.offset_x(), src_cfg.offset_y()},
+                    {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, mode);
+            }, src_fd, dst_fd, -1, src_cfg, dst_cfg, {});
+        };
+        cbs.onRgaOsd = [this](uint32_t job_id, uint64_t src_fd, uint64_t dst_fd, RgaConfig dst_cfg, ImOsd osd_cfg) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                SuOS::graphics::im_osd_t params; 
+                memset(&params, 0, sizeof(params));
+                chain.addOsd(s, d, {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, params);
+            }, src_fd, dst_fd, -1, {}, dst_cfg, {});
+        };
+        cbs.onRgaResize = [this](uint32_t job_id, uint64_t src_fd, uint64_t dst_fd, RgaConfig src_cfg, RgaConfig dst_cfg, double fx, double fy) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addResize(s, d, 
+                    {src_cfg.width(), src_cfg.height(), src_cfg.format(), src_cfg.offset_x(), src_cfg.offset_y()},
+                    {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, fx, fy);
+            }, src_fd, dst_fd, -1, src_cfg, dst_cfg, {});
+        };
+        cbs.onRgaCrop = [this](uint32_t job_id, uint64_t src_fd, uint64_t dst_fd, RgaConfig src_cfg, RgaConfig dst_cfg) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addCrop(s, d, 
+                    {src_cfg.width(), src_cfg.height(), src_cfg.format(), src_cfg.offset_x(), src_cfg.offset_y()},
+                    {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()});
+            }, src_fd, dst_fd, -1, src_cfg, dst_cfg, {});
+        };
+        cbs.onRgaConvert = [this](uint32_t job_id, uint64_t src_fd, uint64_t dst_fd, RgaConfig src_cfg, RgaConfig dst_cfg, int mode) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addConvert(s, d, 
+                    {src_cfg.width(), src_cfg.height(), src_cfg.format(), src_cfg.offset_x(), src_cfg.offset_y()},
+                    {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, mode);
+            }, src_fd, dst_fd, -1, src_cfg, dst_cfg, {});
+        };
+        cbs.onRgaFlip = [this](uint32_t job_id, uint64_t src_fd, uint64_t dst_fd, RgaConfig src_cfg, RgaConfig dst_cfg, int mode) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addFlip(s, d, 
+                    {src_cfg.width(), src_cfg.height(), src_cfg.format(), src_cfg.offset_x(), src_cfg.offset_y()},
+                    {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, mode);
+            }, src_fd, dst_fd, -1, src_cfg, dst_cfg, {});
+        };
+        cbs.onRgaComposite = [this](uint32_t job_id, uint64_t fg_fd, uint64_t bg_fd, uint64_t dst_fd, RgaConfig fg_cfg, RgaConfig bg_cfg, RgaConfig dst_cfg, int mode) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addComposite(s, p, d, 
+                    {fg_cfg.width(), fg_cfg.height(), fg_cfg.format(), fg_cfg.offset_x(), fg_cfg.offset_y()},
+                    {bg_cfg.width(), bg_cfg.height(), bg_cfg.format(), bg_cfg.offset_x(), bg_cfg.offset_y()},
+                    {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, mode);
+            }, fg_fd, dst_fd, bg_fd, fg_cfg, dst_cfg, bg_cfg);
+        };
+        cbs.onRgaColorKey = [this](uint32_t job_id, uint64_t fg_fd, uint64_t bg_fd, RgaConfig fg_cfg, RgaConfig bg_dst_cfg, ImColorKeyRange range, int mode) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                SuOS::graphics::im_colorkey_range r;
+                r.max = range.max();
+                r.min = range.min();
+                chain.addColorKey(s, d, 
+                    {fg_cfg.width(), fg_cfg.height(), fg_cfg.format(), fg_cfg.offset_x(), fg_cfg.offset_y()},
+                    {bg_dst_cfg.width(), bg_dst_cfg.height(), bg_dst_cfg.format(), bg_dst_cfg.offset_x(), bg_dst_cfg.offset_y()}, r, mode);
+            }, fg_fd, bg_fd, -1, fg_cfg, bg_dst_cfg, {});
+        };
+        cbs.onRgaMosaic = [this](uint32_t job_id, uint64_t dst_fd, RgaConfig dst_cfg, int mode) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addMosaic(d, {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, mode);
+            }, -1, dst_fd, -1, {}, dst_cfg, {});
+        };
+        cbs.onRgaRectangle = [this](uint32_t job_id, uint64_t dst_fd, RgaConfig dst_cfg, uint32_t color, int thickness) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                chain.addRectangle(d, {dst_cfg.width(), dst_cfg.height(), dst_cfg.format(), dst_cfg.offset_x(), dst_cfg.offset_y()}, color, thickness);
+            }, -1, dst_fd, -1, {}, dst_cfg, {});
+        };
+        
+        cbs.onRgaFillArray = [this](uint32_t job_id, uint64_t dst_fd, RgaConfig dst_cfg, const std::vector<ImRect>& rects, uint32_t color) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                std::vector<SuOS::graphics::im_rect> r;
+                for (const auto& a : rects) {
+                    SuOS::graphics::im_rect ir;
+                    ir.x = a.x(); ir.y = a.y(); ir.width = a.width(); ir.height = a.height();
+                    r.push_back(ir);
+                }
+                chain.addFillArray(d, dst_cfg.format(), dst_cfg.width(), dst_cfg.height(), r, color);
+            }, -1, dst_fd, -1, {}, dst_cfg, {});
+        };
+
+        cbs.onRgaRectangleArray = [this](uint32_t job_id, uint64_t dst_fd, RgaConfig dst_cfg, const std::vector<ImRect>& rects, uint32_t color, int thickness) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                std::vector<SuOS::graphics::im_rect> r;
+                for (const auto& a : rects) {
+                    SuOS::graphics::im_rect ir;
+                    ir.x = a.x(); ir.y = a.y(); ir.width = a.width(); ir.height = a.height();
+                    r.push_back(ir);
+                }
+                chain.addRectangleArray(d, dst_cfg.format(), dst_cfg.width(), dst_cfg.height(), r, color, thickness);
+            }, -1, dst_fd, -1, {}, dst_cfg, {});
+        };
+
+        cbs.onRgaMosaicArray = [this](uint32_t job_id, uint64_t dst_fd, RgaConfig dst_cfg, const std::vector<ImRect>& rects, int mode) {
+            handleRgaGeneric(job_id, [=](SuOS::graphics::RgaChain& chain, auto s, auto d, auto p) {
+                std::vector<SuOS::graphics::im_rect> r;
+                for (const auto& a : rects) {
+                    SuOS::graphics::im_rect ir;
+                    ir.x = a.x(); ir.y = a.y(); ir.width = a.width(); ir.height = a.height();
+                    r.push_back(ir);
+                }
+                chain.addMosaicArray(d, dst_cfg.format(), dst_cfg.width(), dst_cfg.height(), r, mode);
+            }, -1, dst_fd, -1, {}, dst_cfg, {});
+        };
+
         _parser = std::make_unique<GraphicsMsg_ToRgaParser>(_runtime, cbs);
     }
 
@@ -38,54 +153,33 @@ public:
     }
 
 private:
-    void handleRgaRequest(uint32_t job_id, int8_t type, 
-                          int src_fd, int src_w, int src_h, int src_fmt, int src_x, int src_y,
-                          int dst_fd, int dst_w, int dst_h, int dst_fmt, int dst_x, int dst_y,
-                          int pat_fd, int pat_w, int pat_h, int pat_fmt, int pat_x, int pat_y,
-                          int angle, uint32_t color, int mode, double fx, double fy)
+    using ChainBuilder = std::function<void(SuOS::graphics::RgaChain&, 
+                                          std::shared_ptr<SuOS::graphics::VBuffer>, 
+                                          std::shared_ptr<SuOS::graphics::VBuffer>, 
+                                          std::shared_ptr<SuOS::graphics::VBuffer>)>;
+
+    void handleRgaGeneric(uint32_t job_id, ChainBuilder cb, 
+                         int64_t s_fd, int64_t d_fd, int64_t p_fd,
+                         RgaConfig s_cfg, RgaConfig d_cfg, RgaConfig p_cfg) 
     {
         using namespace SuOS::graphics;
-        // 使用一个名为 RgaUdsService 的公共 User 以复用或者自动释放 imported buffers
         auto usr = VramProvider::getInstance().getOrCreateUsr("RgaUdsService_Imports");
         
-        std::shared_ptr<VBuffer> src_buf, dst_buf, pat_buf;
-        RgaConfig src_cfg{src_w, src_h, src_fmt, src_x, src_y};
-        RgaConfig dst_cfg{dst_w, dst_h, dst_fmt, dst_x, dst_y};
-        RgaConfig pat_cfg{pat_w, pat_h, pat_fmt, pat_x, pat_y};
-        
-        // 当传入有效的 fd 时，我们需要接管
-        if (src_fd >= 0) src_buf = usr->importBuffer(src_fd, src_w, src_h, src_fmt, src_w * 4, src_w * src_h * 4);
-        if (dst_fd >= 0) dst_buf = usr->importBuffer(dst_fd, dst_w, dst_h, dst_fmt, dst_w * 4, dst_w * dst_h * 4);
-        if (pat_fd >= 0) pat_buf = usr->importBuffer(pat_fd, pat_w, pat_h, pat_fmt, pat_w * 4, pat_w * pat_h * 4);
-        
-        RgaStep step;
-        step.type = static_cast<RgaStepType>(type);
-        step.src = src_buf;
-        step.dst = dst_buf;
-        step.pat = pat_buf;
-        step.src_cfg = src_cfg;
-        step.dst_cfg = dst_cfg;
-        step.pat_cfg = pat_cfg;
-        step.angle = angle;
-        step.color = color;
-        step.mode = mode;
-        step.fx = fx;
-        step.fy = fy;
-        
+        std::shared_ptr<VBuffer> s, d, p;
+        if (s_fd >= 0) s = usr->importBuffer(s_fd, s_cfg.width(), s_cfg.height(), s_cfg.format(), s_cfg.width() * 4, s_cfg.width() * s_cfg.height() * 4);
+        if (d_fd >= 0) d = usr->importBuffer(d_fd, d_cfg.width(), d_cfg.height(), d_cfg.format(), d_cfg.width() * 4, d_cfg.width() * d_cfg.height() * 4);
+        if (p_fd >= 0) p = usr->importBuffer(p_fd, p_cfg.width(), p_cfg.height(), p_cfg.format(), p_cfg.width() * 4, p_cfg.width() * p_cfg.height() * 4);
+
         RgaChain chain;
-        chain.steps.push_back(step);
-        
-        // 在引擎的线程里或者提交，等异步回调回来然后再将 err_code 给 UDS 客户端返回。
-        _runtime->postTask([this, chain, job_id, src_buf, dst_buf, pat_buf]() { 
-            RgaEngine::getInstance().submit(chain, [this, job_id, src_buf, dst_buf, pat_buf](uint32_t err_code) {
+        cb(chain, s, d, p);
+
+        _runtime->postTask([this, chain, job_id, s, d, p]() {
+            RgaEngine::getInstance().submit(chain, [this, job_id, s, d, p](uint32_t err_code) {
                 this->postResponse(job_id, err_code);
-                // 这里我们暂存 buf 以避免在 submit 出去前共享指针就被释放，
-                // 同时，import 进来的其实可以立刻丢弃，因为真正的 buf 是借用，
-                // 具体的按需释放机制可通过清掉 Provider 里该 User 达成，或者让智能指针自然销毁
             });
         });
     }
-    
+
     void postResponse(uint32_t job_id, uint32_t err_code) {
         if (_runtime->isInEventLoop()) {
             sendResponse(job_id, err_code);

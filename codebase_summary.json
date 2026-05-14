@@ -1,0 +1,262 @@
+{
+  "SuOS.h": {
+    "s": "包含标准输入输出头文件，作为项目统一包含文件。",
+    "h": "73ce89d34cdd18d734337c2e26160902"
+  },
+  "core/Graphics/Rga/include/RgaEngine.hpp": {
+    "s": "封装 RGA 硬件加速的异步任务提交与 epoll 事件驱动引擎。",
+    "h": "a234501c507aaf20005f20caf05126cc"
+  },
+  "core/Graphics/Rga/include/RgaRemoteProxy.hpp": {
+    "s": "提供远程代理接口，用于跨进程或跨设备调用RGA图形处理功能。",
+    "h": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "core/Graphics/Rga/include/RgaService.hpp": {
+    "s": "解析并处理图形RGA请求，调用引擎执行图像操作。",
+    "h": "32ddf57d0762a80452ce5b6e51a4ee5e"
+  },
+  "core/Graphics/Rga/include/RgaServiceClient.hpp": {
+    "s": "封装RGA图形处理服务的客户端，用于构建和发送图形处理请求。",
+    "h": "89b21a9df16c601c9c24e28472e5258f"
+  },
+  "core/Graphics/Rga/include/RgaTypes.hpp": {
+    "s": "定义RGA图形处理任务的配置、步骤与链式调用接口。",
+    "h": "80f158b971b9484bfaae46b636abdb35"
+  },
+  "core/Graphics/Vram/VramProvider.hpp": {
+    "s": "提供显存管理与DRM/RGA硬件加速的缓冲区生命周期控制。",
+    "h": "6a1ada2072332dde02ee2b4c55888a84"
+  },
+  "core/Graphics/Vtimer/VTimerHardwareAdapter.hpp": {
+    "s": "通过 DRM 接口监听硬件 VSync 信号并触发 VTimer 分发。",
+    "h": "4649b403baa7db9f538e138defe53a1c"
+  },
+  "core/Graphics/Vtimer/vtimer.hpp": {
+    "s": "提供基于VSync周期的微秒级定时任务调度框架，支持硬件同步与任务分发。",
+    "h": "8d264b0159f9ffe3a621023887eae8e4"
+  },
+  "core/Main/Database/Datastruct.h": {
+    "s": "定义用户、分区、应用配置结构体及支持多字段快速查询的容器。",
+    "h": "3400ed93710ec03f321fb29c52cdb79e"
+  },
+  "core/Main/Database/suDbError.h": {
+    "s": "定义数据库操作的错误码常量",
+    "h": "fb6a1cd41c49e3db7e7fa1465d3d81c8"
+  },
+  "core/Main/Database/suDbRegistryMgr.hpp": {
+    "s": "管理数据库配置注册表，支持单例访问、多索引查询与状态更新。",
+    "h": "0eccf4ce679cb9a719f0d5963da28511"
+  },
+  "core/Main/include/main.h": {
+    "s": "封装主程序类，集成运行时与数据库管理器，提供初始化与运行接口。",
+    "h": "b46f5932459fe7a680be06f080208dde"
+  },
+  "core/Network_service/Connectors/base/BaseConn_def.hpp": {
+    "s": "定义网络连接器的错误码和动作ID枚举",
+    "h": "5403a4575c3d575426b3f700922691b1"
+  },
+  "core/Network_service/Connectors/base/BaseConnection.hpp": {
+    "s": "定义网络连接基类与监听器接口，封装连接、断开、发送等核心操作。",
+    "h": "8e2f89c4bf15f0c974374d97f9eccf70"
+  },
+  "core/Router/Router.hpp": {
+    "s": "管理UDS服务器，实现客户端消息路由、心跳检测与状态管理。",
+    "h": "061b55e88877532f8ed5ebbc524050fe"
+  },
+  "core/Router/Router_ErrorCode.h": {
+    "s": "定义Uds路由模块的内部与外部错误码常量",
+    "h": "346d3c3150489103d35176e5fde24cee"
+  },
+  "core/Router/Router_Heartbeat.hpp": {
+    "s": "管理心跳包的发送与超时检测，维护客户端连接状态。",
+    "h": "24ce03817e5aaf8899909234ce976a06"
+  },
+  "core/Router/Router_State.hpp": {
+    "s": "管理路由器状态的线程安全类，支持状态枚举与读写操作。",
+    "h": "638e2ab52d09f01f9d6a054ee996d837"
+  },
+  "core/Router/suRouterAuth.hpp": {
+    "s": "管理动态白名单并基于进程路径、UID/GID进行连接鉴权。",
+    "h": "e0a627f286cb5095e46f397e77671591"
+  },
+  "core/SuOS_Config.h": {
+    "s": "定义SuOS系统应用、组件的ID及配置路径常量。",
+    "h": "d60b6de284d271e28edd42527ba3caa5"
+  },
+  "core/SysService/SysService.hpp": {
+    "s": "提供系统服务基类，封装UDS通信、消息解析与生命周期管理。",
+    "h": "5ef9a1898c26e3f125964e137eb73865"
+  },
+  "core/SysService/sysService_df.h": {
+    "s": "定义系统服务停止原因的常量枚举",
+    "h": "b2674c19142cc3c7fbe4d7fc33680100"
+  },
+  "core/suRuntime/include/suRuntime.hpp": {
+    "s": "提供基于Boost.Asio的异步任务调度与线程池管理，支持延时、周期执行及线程安全分发。",
+    "h": "2f87aca040e5121c73467b29309d27a3"
+  },
+  "core/suUDS/basic/include/Uds_Client.h": {
+    "s": "基于Boost.Asio实现Unix域套接字客户端，支持异步连接、消息收发与回调处理。",
+    "h": "e8de530e86e1239b9034a51651df63cd"
+  },
+  "core/suUDS/basic/include/Uds_Error_type.h": {
+    "s": "定义UDS模块的错误码常量",
+    "h": "4ed0ece3975c970504cdb2400414a31f"
+  },
+  "core/suUDS/basic/include/Uds_Server.h": {
+    "s": "基于Boost.Asio实现Unix Domain Socket服务器，支持多客户端连接、消息回调与错误处理。",
+    "h": "55b5555d3f366db243de02d3594f294b"
+  },
+  "core/suUDS/suUdsMgr/Uds_ClientMgr.hpp": {
+    "s": "管理UDS客户端连接、消息收发及心跳检测。",
+    "h": "8784f6abe8d2bcd01465c938a30fe02d"
+  },
+  "core/suUDS/suUdsMgr/Uds_ClientMgr_ErrorCode.h": {
+    "s": "定义UDS客户端管理器的内部与输出错误码常量",
+    "h": "77ec5e8999ec11a4de9f4a222b4d0a09"
+  },
+  "core/suUDS/suUdsMgr/Uds_ClientState.hpp": {
+    "s": "管理UDS客户端状态机，提供线程安全的状态设置与获取功能。",
+    "h": "b15da7e4e790d27ebf389b2d989e48e2"
+  },
+  "core/suUDS/suUdsMgr/Uds_Client_heartbeat.hpp": {
+    "s": "实现UDS客户端心跳管理，支持定时发送心跳包与超时检测。",
+    "h": "a55d34dffb27a124fe9ce71262907364"
+  },
+  "core/suUDS/suUdsMgr/Uds_df.h": {
+    "s": "定义UDS客户端连接与心跳的配置常量",
+    "h": "561648b0227b5e514655cda5b516d40c"
+  },
+  "core/suUDS/suUdsMsg/Uds_MsgBuilder.hpp": {
+    "s": "使用 FlatBuffers 构建 UDS 消息信封，提供线程不安全的单次构建接口。",
+    "h": "a1af82fac47b6ac6aad13bd1873faeb9"
+  },
+  "core/suUDS/suUdsMsg/Uds_MsgParser.hpp": {
+    "s": "解析UDS消息缓冲区，验证FlatBuffers格式并提取消息字段。",
+    "h": "592b77abfea746937e0c6ddd115cc4a4"
+  },
+  "core/suUDS/suUdsMsg/part/flatbuffers_generator.py": {
+    "s": "解析 FlatBuffers schema 文件并生成对应代码。",
+    "h": "9fb7fbe4df6744b2a48ce38f43fdfbfe"
+  },
+  "core/suUDS/suUdsMsg/part/general/GeneralMsg_fromMain.fbs": {
+    "s": "定义空消息类型和Union，用于封装来自主线程的通用消息。",
+    "h": "48aac5b8e2d96aa13edc2d26913c4ff1"
+  },
+  "core/suUDS/suUdsMsg/part/general/GeneralMsg_fromMain_generated.h": {
+    "s": "定义从主线程发送的通用消息结构，包含用户停止请求和停止杀死消息。",
+    "h": "bb85389a651125ac656d29f286f3b2a1"
+  },
+  "core/suUDS/suUdsMsg/part/general/GeneralMsg_toMain.fbs": {
+    "s": "定义用于主进程通信的通用空消息封装结构。",
+    "h": "ac6a610ee2221a36f9232cf069cb260c"
+  },
+  "core/suUDS/suUdsMsg/part/general/GeneralMsg_toMain_generated.h": {
+    "s": "定义用于主程序通信的FlatBuffers通用消息封装结构。",
+    "h": "43e5241ee08b78744d29a90eb15f5eda"
+  },
+  "core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_fromMainBuilder.hpp": {
+    "s": "使用 FlatBuffers 构建从主程序发送的 UDS 消息（如停止请求）。",
+    "h": "431f421ffe092410ab5945a83ffed809"
+  },
+  "core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_fromMainParser.hpp": {
+    "s": "解析来自主线程的通用UDS消息，触发用户停止请求或终止回调。",
+    "h": "a2740527176eea41e83b90ac93f77fbc"
+  },
+  "core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_toMainBuilder.hpp": {
+    "s": "构建UDS通用消息到主进程的FlatBuffers构建器，支持UsrStopResponse等消息生成。",
+    "h": "8babed983d28531c1a61ae9a8ab33e8d"
+  },
+  "core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_toMainParser.hpp": {
+    "s": "解析UDS通用消息并分发回调，支持用户停止响应处理。",
+    "h": "8981a524fb586c18a91dbc685ceb59d7"
+  },
+  "core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_FromRga.fbs": {
+    "s": "定义从RGA模块接收图形响应消息的数据结构",
+    "h": "d7eb0703a1ec0efa1582284a554fd261"
+  },
+  "core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_FromRga_generated.h": {
+    "s": "定义FlatBuffers消息结构，用于RGA图形响应的序列化与反序列化。",
+    "h": "658683be6e5067c51da0518d141e34ea"
+  },
+  "core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_ToRga.fbs": {
+    "s": "定义RGA图形处理任务的消息格式，支持拷贝、旋转、填充等16种操作。",
+    "h": "0bc419961f2bdc9f91c17a7450424b54"
+  },
+  "core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_ToRga_generated.h": {
+    "s": "定义FlatBuffers序列化结构，封装RGA图形处理任务类型与数据格式。",
+    "h": "cd5a41594e053b1b88779fcded1ceb82"
+  },
+  "core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_FromRgaBuilder.hpp": {
+    "s": "构建RGA响应消息的FlatBuffers构建器",
+    "h": "d2d9d244b323126a6f57870c704e21cf"
+  },
+  "core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_FromRgaParser.hpp": {
+    "s": "解析来自RGA的图形消息，验证FlatBuffers格式并触发回调。",
+    "h": "6838ad2ae601604f766b0c7fe0100570"
+  },
+  "core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_ToRgaBuilder.hpp": {
+    "s": "构建图形RGA操作消息的FlatBuffers序列化器",
+    "h": "17e6658ae2a4062628c3098482214170"
+  },
+  "core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_ToRgaParser.hpp": {
+    "s": "解析图形消息并触发RGA操作回调",
+    "h": "9f42a9927efb6dfbce23e0df44d73923"
+  },
+  "core/suUDS/suUdsMsg/part/router/RouterMsg_fromRouter.fbs": {
+    "s": "定义路由器向其他组件发送的连接与注册消息结构。",
+    "h": "51f73f6dc9992a139a00f6197e85414c"
+  },
+  "core/suUDS/suUdsMsg/part/router/RouterMsg_fromRouter_generated.h": {
+    "s": "定义了从路由器接收消息的 FlatBuffers 结构体和枚举类型。",
+    "h": "5738cddd20d4f12f8883cc26487d1eb0"
+  },
+  "core/suUDS/suUdsMsg/part/router/RouterMsg_toRouter.fbs": {
+    "s": "定义路由器接收的启用应用注册消息结构",
+    "h": "f3305c1938ef9e8e5b94dfd38c9dfc65"
+  },
+  "core/suUDS/suUdsMsg/part/router/RouterMsg_toRouter_generated.h": {
+    "s": "定义路由器间通信的FlatBuffers消息结构，支持应用注册功能。",
+    "h": "a7b753270b12869eaa99510ab0cd15ea"
+  },
+  "core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_fromRouterBuilder.hpp": {
+    "s": "构建并序列化从路由器到其他组件的 FlatBuffers 消息。",
+    "h": "df20d45b61e5554849e007cbb9f6929d"
+  },
+  "core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_fromRouterParser.hpp": {
+    "s": "解析来自路由器的FlatBuffers消息并触发相应回调。",
+    "h": "6b5e618813c430c1f2555c92c965ad23"
+  },
+  "core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_toRouterBuilder.hpp": {
+    "s": "使用 FlatBuffers 构建并封装 UDS 路由器消息（如应用注册）的生成器。",
+    "h": "ee40c8d15f4ac44b2f2371428b973f01"
+  },
+  "core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_toRouterParser.hpp": {
+    "s": "解析路由器消息，根据类型调用应用注册回调。",
+    "h": "75badba4f052a93e6683391cf8a37b12"
+  },
+  "core/suUDS/suUdsMsg/partExample/Uds_PartExampleBuilder.hpp": {
+    "s": "使用 FlatBuffers 构建 UDS 消息的工厂类，支持多种消息类型。",
+    "h": "c7ed9e2e9c2baa753e1780aa6749c9bd"
+  },
+  "core/suUDS/suUdsMsg/partExample/Uds_PartExampleParser.hpp": {
+    "s": "解析UDS消息负载，根据类型调用对应回调函数处理数据。",
+    "h": "851e24045e5566a7b29692932b9dab88"
+  },
+  "core/suUDS/suUdsMsg/partExample/suUdsPartExample.fbs": {
+    "s": "定义UDS协议消息的FlatBuffers结构，支持多种消息类型封装。",
+    "h": "5e833e5c53daf9db44206a1e0747ffa7"
+  },
+  "core/suUDS/suUdsMsg/partExample/suUdsPartExample_generated.h": {
+    "s": "使用 FlatBuffers 定义 UDS 消息的序列化结构与枚举类型。",
+    "h": "4cb07f55f5e9c2bd36bd8070bcf7e45a"
+  },
+  "core/suUDS/suUdsMsg/suUdsMsg.fbs": {
+    "s": "定义 UDS 消息信封结构，用于封装发送者、接收者及负载数据。",
+    "h": "009cf3ae103c20f002fb06595fc90580"
+  },
+  "core/suUDS/suUdsMsg/suUdsMsg_generated.h": {
+    "s": "定义UDS消息信封结构，用于序列化通信数据。",
+    "h": "e631415c926a531cec7ea2070614270a"
+  }
+}
