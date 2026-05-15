@@ -4,11 +4,10 @@ FlatBuffers Code Generator - Fixed f-string compatibility
 """
 
 import subprocess
-import sys
 import re
 import os
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 import argparse
 
@@ -36,6 +35,7 @@ class SchemaInfo:
     tables: Dict[str, TableInfo]
     unions: Dict[str, UnionInfo]
     root_type: str
+    structs: Optional[List[str]] = None # 新增字段
 
 class FlatBuffersParser:
     def __init__(self, fbs_path: str):
@@ -44,10 +44,18 @@ class FlatBuffersParser:
             
     def parse(self) -> SchemaInfo:
         namespace = self._extract_namespace()
+        structs = self._extract_structs() # 记录所有 struct 名称
         tables = self._extract_tables()
         unions = self._extract_unions()
         root_type = self._extract_root_type()
-        return SchemaInfo(namespace, tables, unions, root_type)
+        return SchemaInfo(namespace, tables, unions, root_type, structs=structs)
+
+    def _extract_structs(self) -> List[str]:
+        structs = []
+        struct_pattern = r'struct\s+(\w+)\s*\{'
+        for match in re.finditer(struct_pattern, self.content):
+            structs.append(match.group(1))
+        return structs
         
     def _extract_namespace(self) -> str:
         match = re.search(r'namespace\s+([\w.]+)\s*;', self.content)
@@ -113,6 +121,9 @@ class CodeGenerator:
         }
         return mapping.get(fb_type, fb_type)
 
+    def _is_struct(self, fb_type: str) -> bool:
+        return bool(self.schema.structs and fb_type in self.schema.structs)
+
     def generate(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
         subprocess.run([str(self.flatc_path), '--cpp', '-o', str(self.output_dir), str(self.fbs_path)], check=True)
@@ -124,6 +135,21 @@ class CodeGenerator:
 
         # 1. Builder
         builder_path = self.output_dir / f"Uds_{class_name}Builder.hpp"
+        
+        # 获取 Root Table 的字段，用于在 CreateRoot 中补全
+        root_table = self.schema.tables.get(self.schema.root_type)
+        root_extra_args_def = []
+        root_extra_args_call = []
+        if root_table:
+            for f in root_table.fields:
+                if f.name != "payload": # payload 是 union
+                    cpp_type = self._get_cpp_type(f.type)
+                    root_extra_args_def.append(f"{cpp_type} {f.name}")
+                    root_extra_args_call.append(f"{f.name}")
+        
+        root_args_def_str = ", ".join(root_extra_args_def) + (", " if root_extra_args_def else "")
+        root_args_call_str = ", ".join(root_extra_args_call) + (", " if root_extra_args_call else "")
+
         methods = []
         for m in members:
             table = self.schema.tables.get(m)
@@ -140,13 +166,19 @@ class CodeGenerator:
                     create_args_list.append(f"{f.name}__")
                 elif f.is_vector:
                     cpp_args_list.append(f"const std::vector<{self._get_cpp_type(f.type)}>& {f.name}")
-                    fbb_calls_list.append(f"            auto {f.name}__ = fbb_.CreateVector({f.name});")
+                    if self._is_struct(f.type):
+                        fbb_calls_list.append(f"            auto {f.name}__ = fbb_.CreateVectorOfStructs({f.name});")
+                    else:
+                        fbb_calls_list.append(f"            auto {f.name}__ = fbb_.CreateVector({f.name});")
                     create_args_list.append(f"{f.name}__")
+                elif self._is_struct(f.type):
+                    cpp_args_list.append(f"const {f.type}& {f.name}")
+                    create_args_list.append(f"&{f.name}")
                 else:
                     cpp_args_list.append(f"{self._get_cpp_type(f.type)} {f.name}")
-                    create_args_list.append(f.name)
+                    create_args_list.append(f"{f.name}")
 
-            cpp_args_str = ", ".join(cpp_args_list)
+            cpp_args_str = root_args_def_str + ", ".join(cpp_args_list)
             fbb_calls_str = "\n".join(fbb_calls_list)
             create_args_str = ", ".join(create_args_list)
 
@@ -156,7 +188,7 @@ class CodeGenerator:
             fbb_.Clear();
 {fbb_calls_str}
             auto table = Create{m}({create_args_str});
-            auto root = Create{self.schema.root_type}(fbb_, {union_name}_{m}, table.Union());
+            auto root = Create{self.schema.root_type}(fbb_, {root_args_call_str}{union_name}_{m}, table.Union());
             fbb_.Finish(root);
             return LockGuard(fbb_);
         }}
@@ -196,13 +228,26 @@ namespace {ns_cpp} {{
 
         # 2. Parser
         parser_path = self.output_dir / f"Uds_{class_name}Parser.hpp"
+        
+        # 获取 Root Table 的字段，用于在 Parser 回调中传递
+        root_cb_args_def = []
+        root_extract_list = []
+        root_call_args_list = []
+        if root_table:
+            for f in root_table.fields:
+                if f.name != "payload":
+                    cpp_type = self._get_cpp_type(f.type)
+                    root_cb_args_def.append(f"{cpp_type} {f.name}")
+                    root_extract_list.append(f"                    auto {f.name}_val = env->{f.name}();")
+                    root_call_args_list.append(f"{f.name}_val")
+
         cb_defs_list = []
         cb_vars_list = []
         for m in members:
             table = self.schema.tables.get(m)
             if not table: continue
             
-            cpp_args_list = []
+            cpp_args_list = root_cb_args_def.copy()
             for f in table.fields:
                 if f.is_string:
                     cpp_args_list.append(f"const std::string& {f.name}")
@@ -223,8 +268,8 @@ namespace {ns_cpp} {{
             table = self.schema.tables.get(m)
             if not table: continue
             
-            extract_list = []
-            call_args_list = []
+            extract_list = root_extract_list.copy()
+            call_args_list = root_call_args_list.copy()
             for f in table.fields:
                 if f.is_string:
                     extract_list.append(f"                    std::string {f.name}_val = table->{f.name}() ? table->{f.name}()->str() : \"\";")
@@ -236,7 +281,11 @@ namespace {ns_cpp} {{
                     call_args_list.append(f"{f.name}_val")
                 else:
                     extract_list.append(f"                    auto {f.name}_val = table->{f.name}();")
-                    call_args_list.append(f"{f.name}_val")
+                    # 如果是 struct，调用回调时也需要解引用或者处理，但通常 struct 返回的是指针
+                    if self._is_struct(f.type):
+                         call_args_list.append(f"*{f.name}_val")
+                    else:
+                         call_args_list.append(f"{f.name}_val")
                     
             extract_str = "\n".join(extract_list)
             if extract_str:

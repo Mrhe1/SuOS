@@ -5,6 +5,8 @@
 #include <thread>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <vector>
+#include <memory>
 
 namespace SuOS::graphics {
 
@@ -45,8 +47,14 @@ public:
         return instance;
     }
 
-    // 唯一的对外提交接口：支持单个或多个 Step 的 Chain
-    std::shared_ptr<RgaJobHandle> submit(const RgaChain& chain, RgaCallback cb);
+    /**
+     * @brief 提交 RGA 任务链
+     * @param chain 任务链描述
+     * @param cb 回调函数。如果为 nullptr，则本函数会返回最后一个任务的 fence fd；
+     *           如果提供了回调，任务完成后会自动触发回调，并返回 0。
+     * @return int 成功时返回 fence fd (无回调) 或 0 (有回调)；失败返回 -1
+     */
+    int submit(const RgaChain& chain, RgaCallback cb);
 
     // 引擎内部：从 epoll 树和活跃列表中移除句柄
     void removeHandle(RgaJobHandle* handle_ptr, uint32_t final_err_code);

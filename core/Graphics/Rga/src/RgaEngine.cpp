@@ -3,7 +3,7 @@
 #include <cstring>
 #include <sys/eventfd.h>
 #include <unordered_map>
-#include"rga/im2d.h"
+#include "rga/im2d.h"
 
 namespace SuOS::graphics {
 
@@ -73,7 +73,7 @@ IM_USAGE RgaEngine::getRotationUsage(int angle) {
     }
 }
 
-std::shared_ptr<RgaJobHandle> RgaEngine::submit(const RgaChain& chain, RgaCallback cb) {
+int RgaEngine::submit(const RgaChain& chain, RgaCallback cb) {
     auto handle = std::make_shared<RgaJobHandle>(this);
     handle->user_callback = cb;
 
@@ -109,8 +109,7 @@ std::shared_ptr<RgaJobHandle> RgaEngine::submit(const RgaChain& chain, RgaCallba
         // 无论上层如何复用同一块显存，每一步的区域矩形始终由独立的 src_cfg/dst_cfg 来控制
         im_rect s_rect = {step.src_cfg.x_offset, step.src_cfg.y_offset, step.src_cfg.width, step.src_cfg.height};
         im_rect d_rect = {step.dst_cfg.x_offset, step.dst_cfg.y_offset, step.dst_cfg.width, step.dst_cfg.height};
-        im_rect p_rect = {step.pat_cfg.x_offset, step.pat_cfg.y_offset, step.pat_cfg.width, step.pat_cfg.height};
-        im_rect empty_rect = {0};
+        // im_rect p_rect = {step.pat_cfg.x_offset, step.pat_cfg.y_offset, step.pat_cfg.width, step.pat_cfg.height}; // Currently unused
 
         switch (step.type) {
             case RgaStepType::COPY:
@@ -171,17 +170,32 @@ std::shared_ptr<RgaJobHandle> RgaEngine::submit(const RgaChain& chain, RgaCallba
         current_in_fence = current_out_fence; 
     }
 
-
-    // 将整个 Chain 最后一步输出的 Fence 赋给 handle，准备监听
+    // 将整个 Chain 最后一步输出的 Fence 赋给 handle
     handle->final_fence_fd = current_out_fence;
 
-    // 加入存活列表
+    // 情况 A: 用户没传回调 -> 直接返回 fence_fd
+    if (!cb) {
+        // 如果没有合法的 fence 且没有回调，返回 -1
+        if (handle->final_fence_fd < 0) return -1;
+        
+        // 为了确保 VBuffer 在硬件执行期间不被释放，即使没有回调，
+        // 我们也需要管理 handle。但在此语义下，用户通过 fence 同步，
+        // 同步完成后用户通常会处理 Buffer。
+        // 这里为了安全，仍将其加入 active 列表，但不挂载 epoll
+        // 并在销毁时由用户 close fence
+        {
+            std::lock_guard<std::mutex> lock(_handles_mtx);
+            _active_handles.push_back(handle);
+        }
+        return handle->final_fence_fd;
+    }
+
+    // 情况 B: 用户传了回调 -> 由引擎 epoll 监听并触发回调
     {
         std::lock_guard<std::mutex> lock(_handles_mtx);
         _active_handles.push_back(handle);
     }
 
-    // 挂载到 epoll 树上
     if (handle->final_fence_fd >= 0) {
         epoll_event ev;
         ev.events = EPOLLIN | EPOLLERR | EPOLLONESHOT;
@@ -192,7 +206,7 @@ std::shared_ptr<RgaJobHandle> RgaEngine::submit(const RgaChain& chain, RgaCallba
         removeHandle(handle.get(), RGA_ERR_HARDWARE);
     }
 
-    return handle;
+    return 0;
 }
 
 void RgaEngine::removeHandle(RgaJobHandle* handle_ptr, uint32_t final_err_code) {
