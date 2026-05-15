@@ -18,18 +18,22 @@ TXT_FILE = "codebase_summary.txt"
 ALLOWED_EXTENSIONS = {'.h', '.hpp', '.fbs', '.py'}
 
 def get_all_git_tracked_files():
-    """获取 Git 跟踪的所有文件，自动排除 .gitignore 里的内容"""
+    """获取脚本所在目录及其子目录下被 Git 追踪的文件"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     try:
-        # 获取所有已跟踪的文件
+        # 在脚本所在目录执行 git ls-files
         result = subprocess.check_output(
             ["git", "ls-files"], 
-            text=True
+            cwd=script_dir,
+            text=True,
+            stderr=subprocess.PIPE
         )
         files = result.splitlines()
-        # 过滤后缀
+        # 过滤后缀并转换为绝对路径下的相对路径确保 open() 可用
         return [f for f in files if os.path.splitext(f)[1].lower() in ALLOWED_EXTENSIONS]
-    except Exception as e:
-        print(f"Git 读取失败: {e}")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        error_msg = e.stderr if hasattr(e, 'stderr') else str(e)
+        print(f"❌ Git 读取失败 (请确保在 Git 仓库中运行): {error_msg}")
         return []
 
 def get_hash(content):
@@ -55,7 +59,12 @@ def ask_ai(path, content):
             ],
             response_format={"type": "json_object"}
         )
-        return json.loads(res.choices[0].message.content).get("s", "无总结")
+        # 修复：确保 content 不为 None
+        message_content = res.choices[0].message.content
+        if message_content is None:
+            return "无总结内容"
+        
+        return json.loads(message_content).get("s", "无总结")
     except Exception:
         return "AI 总结失败"
 
@@ -68,24 +77,33 @@ def main():
                 db = json.load(f)
             except: db = {}
 
-    # 2. 获取所有文件（由 Git 决定哪些文件不被忽略）
+    # 2. 获取所有文件
     all_files = get_all_git_tracked_files()
+    print(f"📁 找到 {len(all_files)} 个待处理文件")
     
     # 记录当前运行中还在的文件，用于清理已删除的文件
     current_scan_paths = set(all_files)
 
     # 准备需要处理的任务列表
     tasks = []
-    for path in all_files:
-        if not os.path.exists(path): continue
-        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-            content = f.read()
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    for rel_path in all_files:
+        full_path = os.path.join(script_dir, rel_path)
+        if not os.path.exists(full_path): 
+            print(f"  ⚠️  文件不存在，跳过: {full_path}") 
+            continue
+        try:
+            with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+        except Exception as e:
+            print(f"  ⚠️  读取文件失败 {full_path}: {e}")
+            continue
         
         h = get_hash(content)
         
-        # 核心逻辑：如果路径不在索引里，或者哈希值变了，才请求 AI
-        if path not in db or db[path].get("h") != h:
-            tasks.append((path, content, h))
+        # 核心逻辑：使用相对路径作为 key 保持数据库一致性
+        if rel_path not in db or db[rel_path].get("h") != h:
+            tasks.append((rel_path, content, h))
 
     # 并行执行 AI 总结
     updated_count = 0
