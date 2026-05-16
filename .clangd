@@ -7,6 +7,7 @@ CompileFlags:
     # 关键点 2：指向你的 Sysroot
     - "--sysroot=/home/hss/Lyra-sdk/buildroot/output/rockchip_rk3506_luckfox/host/arm-buildroot-linux-gnueabihf/sysroot"
     # 项目内部路径
+    - "-I/home/hss/SuOS"
     - "-I/home/hss/SuOS/core"
     - "-I/home/hss/SuOS/core/suUDS/suUdsMgr"
     - "-I/home/hss/SuOS/core/suUDS/suUdsMsg"

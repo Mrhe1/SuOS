@@ -18,9 +18,6 @@ namespace Uds {
 namespace Msg {
 namespace Router {
 
-struct enableAppRegister;
-struct enableAppRegisterBuilder;
-
 struct onConnect;
 struct onConnectBuilder;
 
@@ -32,17 +29,15 @@ struct RouterEnvelope_fromRouterBuilder;
 
 enum RouterPayload_fromRouter : uint8_t {
   RouterPayload_fromRouter_NONE = 0,
-  RouterPayload_fromRouter_enableAppRegister = 1,
-  RouterPayload_fromRouter_onConnect = 2,
-  RouterPayload_fromRouter_onConnectionLost = 3,
+  RouterPayload_fromRouter_onConnect = 1,
+  RouterPayload_fromRouter_onConnectionLost = 2,
   RouterPayload_fromRouter_MIN = RouterPayload_fromRouter_NONE,
   RouterPayload_fromRouter_MAX = RouterPayload_fromRouter_onConnectionLost
 };
 
-inline const RouterPayload_fromRouter (&EnumValuesRouterPayload_fromRouter())[4] {
+inline const RouterPayload_fromRouter (&EnumValuesRouterPayload_fromRouter())[3] {
   static const RouterPayload_fromRouter values[] = {
     RouterPayload_fromRouter_NONE,
-    RouterPayload_fromRouter_enableAppRegister,
     RouterPayload_fromRouter_onConnect,
     RouterPayload_fromRouter_onConnectionLost
   };
@@ -50,9 +45,8 @@ inline const RouterPayload_fromRouter (&EnumValuesRouterPayload_fromRouter())[4]
 }
 
 inline const char * const *EnumNamesRouterPayload_fromRouter() {
-  static const char * const names[5] = {
+  static const char * const names[4] = {
     "NONE",
-    "enableAppRegister",
     "onConnect",
     "onConnectionLost",
     nullptr
@@ -70,10 +64,6 @@ template<typename T> struct RouterPayload_fromRouterTraits {
   static const RouterPayload_fromRouter enum_value = RouterPayload_fromRouter_NONE;
 };
 
-template<> struct RouterPayload_fromRouterTraits<SuOS::Uds::Msg::Router::enableAppRegister> {
-  static const RouterPayload_fromRouter enum_value = RouterPayload_fromRouter_enableAppRegister;
-};
-
 template<> struct RouterPayload_fromRouterTraits<SuOS::Uds::Msg::Router::onConnect> {
   static const RouterPayload_fromRouter enum_value = RouterPayload_fromRouter_onConnect;
 };
@@ -84,47 +74,6 @@ template<> struct RouterPayload_fromRouterTraits<SuOS::Uds::Msg::Router::onConne
 
 bool VerifyRouterPayload_fromRouter(::flatbuffers::Verifier &verifier, const void *obj, RouterPayload_fromRouter type);
 bool VerifyRouterPayload_fromRouterVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
-
-struct enableAppRegister FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef enableAppRegisterBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_APP_ID = 4
-  };
-  uint32_t app_id() const {
-    return GetField<uint32_t>(VT_APP_ID, 0);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_APP_ID, 4) &&
-           verifier.EndTable();
-  }
-};
-
-struct enableAppRegisterBuilder {
-  typedef enableAppRegister Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_app_id(uint32_t app_id) {
-    fbb_.AddElement<uint32_t>(enableAppRegister::VT_APP_ID, app_id, 0);
-  }
-  explicit enableAppRegisterBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<enableAppRegister> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<enableAppRegister>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<enableAppRegister> CreateenableAppRegister(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t app_id = 0) {
-  enableAppRegisterBuilder builder_(_fbb);
-  builder_.add_app_id(app_id);
-  return builder_.Finish();
-}
 
 struct onConnect FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef onConnectBuilder Builder;
@@ -221,9 +170,6 @@ struct RouterEnvelope_fromRouter FLATBUFFERS_FINAL_CLASS : private ::flatbuffers
     return GetPointer<const void *>(VT_PAYLOAD);
   }
   template<typename T> const T *payload_as() const;
-  const SuOS::Uds::Msg::Router::enableAppRegister *payload_as_enableAppRegister() const {
-    return payload_type() == SuOS::Uds::Msg::Router::RouterPayload_fromRouter_enableAppRegister ? static_cast<const SuOS::Uds::Msg::Router::enableAppRegister *>(payload()) : nullptr;
-  }
   const SuOS::Uds::Msg::Router::onConnect *payload_as_onConnect() const {
     return payload_type() == SuOS::Uds::Msg::Router::RouterPayload_fromRouter_onConnect ? static_cast<const SuOS::Uds::Msg::Router::onConnect *>(payload()) : nullptr;
   }
@@ -238,10 +184,6 @@ struct RouterEnvelope_fromRouter FLATBUFFERS_FINAL_CLASS : private ::flatbuffers
            verifier.EndTable();
   }
 };
-
-template<> inline const SuOS::Uds::Msg::Router::enableAppRegister *RouterEnvelope_fromRouter::payload_as<SuOS::Uds::Msg::Router::enableAppRegister>() const {
-  return payload_as_enableAppRegister();
-}
 
 template<> inline const SuOS::Uds::Msg::Router::onConnect *RouterEnvelope_fromRouter::payload_as<SuOS::Uds::Msg::Router::onConnect>() const {
   return payload_as_onConnect();
@@ -286,10 +228,6 @@ inline bool VerifyRouterPayload_fromRouter(::flatbuffers::Verifier &verifier, co
   switch (type) {
     case RouterPayload_fromRouter_NONE: {
       return true;
-    }
-    case RouterPayload_fromRouter_enableAppRegister: {
-      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Router::enableAppRegister *>(obj);
-      return verifier.VerifyTable(ptr);
     }
     case RouterPayload_fromRouter_onConnect: {
       auto ptr = reinterpret_cast<const SuOS::Uds::Msg::Router::onConnect *>(obj);

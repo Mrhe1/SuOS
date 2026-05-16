@@ -11,11 +11,9 @@
 namespace SuOS::Uds::Msg::Router {
     class RouterMsg_fromRouterParser {
     public:
-        using enableAppRegisterCallback = std::function<void(uint32_t usr, uint32_t part, uint32_t app_id)>;
         using onConnectCallback = std::function<void(uint32_t usr, uint32_t part, uint32_t id)>;
         using onConnectionLostCallback = std::function<void(uint32_t usr, uint32_t part, uint32_t id)>;
         struct Callbacks {
-            enableAppRegisterCallback onenableAppRegister;
             onConnectCallback ononConnect;
             onConnectionLostCallback ononConnectionLost;
         };
@@ -27,15 +25,6 @@ namespace SuOS::Uds::Msg::Router {
             auto env = GetRouterEnvelope_fromRouter(buffer);
             auto payload = env->payload();
             switch (env->payload_type()) {
-                case RouterPayload_fromRouter_enableAppRegister: {
-                    if (_callbacks.onenableAppRegister) {
-                        auto table = static_cast<const enableAppRegister*>(payload);
-                        (void)table;
-                    auto app_id_val = table->app_id();
-                        _callbacks.onenableAppRegister(usr, part, app_id_val);
-                    }
-                    break;
-                }
                 case RouterPayload_fromRouter_onConnect: {
                     if (_callbacks.ononConnect) {
                         auto table = static_cast<const onConnect*>(payload);

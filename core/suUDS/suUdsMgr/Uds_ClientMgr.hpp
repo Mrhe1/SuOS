@@ -372,7 +372,7 @@ namespace SuOS::Uds::ClientMgr {
 		const int _client_connect_dur = SuOS::Uds::ClientMgr::Df::client_connect_dur;
 		const uint32_t _router_id = SuOS::Config::Usr::ROUTER;
 		const uint32_t _router_part = SuOS::Config::Part::ROUTER;
-		const uint32_t _haertbeat_part = SuOS::Config::Part::Heartbeat;
+		const uint32_t _haertbeat_part = SuOS::Config::Part::HEARTBEAT;
 		const uint32_t _router_uid = SuOS::Config::uid::ROUTER;
 		const uint32_t _router_gid = SuOS::Config::gid::ROUTER;
 		//const uint32_t _heartbeat_id = SuOS::Config::CommandId::heartbeat_id;

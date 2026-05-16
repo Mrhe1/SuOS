@@ -67,7 +67,7 @@ namespace SuOS::Uds::ClientMgr {
             const int _heartbeat_interval = SuOS::Uds::ClientMgr::Df::heartbeat_interval;
             const int _heartbeat_timeout = SuOS::Uds::ClientMgr::Df::heartbeat_timeout;
             //const uint32_t _heartbeat_id = SuOS::Config::CommandId::heartbeat_id;
-            const uint32_t _heartbeat_part = SuOS::Config::Part::Heartbeat;
+            const uint32_t _heartbeat_part = SuOS::Config::Part::HEARTBEAT;
             const uint32_t _router_id = SuOS::Config::Usr::ROUTER;
             std::shared_ptr<SuOS::Runtime::suRuntime::ScheduledTask> _heartbeat_task = nullptr;
             // 定时器，用于检测心跳超时

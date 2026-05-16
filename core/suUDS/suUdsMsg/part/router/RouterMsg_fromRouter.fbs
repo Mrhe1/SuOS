@@ -1,9 +1,6 @@
 namespace SuOS.Uds.Msg.Router;
 
 // ---- 消息类型定义 ----
-table enableAppRegister { 
-    app_id: uint32;
-}
 
 // 接受一个进程的连接(id为usr_id或者app_id)
 table onConnect {
@@ -18,7 +15,6 @@ table onConnectionLost {
 // ---- Union 定义 ----
 // 使用 union 将所有可能的空消息统一起来
 union RouterPayload_fromRouter {
-    enableAppRegister,
     onConnect,
     onConnectionLost
 }

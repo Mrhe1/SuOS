@@ -7,6 +7,7 @@ namespace SuOS::Uds::Router {
         Starting,
         Running,
         Stopping,
+        Stopped,
         Error
     };
 

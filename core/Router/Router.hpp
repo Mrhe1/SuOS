@@ -1,13 +1,17 @@
 #pragma once
 
+#include "suRouterAuth.hpp"
+#include <unistd.h>
 #include "Uds_Server.h"
 #include "Router_State.hpp"
 #include "Router_ErrorCode.h"
 #include "Router_Heartbeat.hpp"
 #include "Uds_MsgBuilder.hpp"
 #include "Uds_MsgParser.hpp"
-#include "Uds_RouterMsgBuilder.hpp"
-#include "Uds_RouterMsgParser.hpp"
+#include "Uds_RouterMsg_fromRouterBuilder.hpp"
+#include "Uds_RouterMsg_toRouterParser.hpp"
+#include "Uds_GeneralMsg_fromMainParser.hpp"
+#include "Uds_GeneralMsg_toMainBuilder.hpp"
 #include "suRuntime.hpp"
 #include "SuOS_Config.h"
 #include <iostream>
@@ -28,29 +32,46 @@ namespace SuOS::Uds::Router {
               _builder(runtime),
               _parser(runtime),
               _router_msg_builder(runtime),
+              _router_msg_parser(runtime, {
+                  [this](uint32_t usr, uint32_t part, uint32_t app_id) {
+                      this->handle_enable_app_register(usr, part, app_id);
+                  }
+              }),
+              _general_msg_parser(runtime, {
+                  [this](uint32_t usr, uint32_t part) { this->handle_stop_request(usr, part); },
+                  [this](uint32_t usr, uint32_t part) { this->handle_stop_kill(usr, part); }
+              }),
               _heartbeat(runtime, 
                 [this](uint32_t tid, const std::vector<uint8_t>& p) { this->raw_send(tid, p); },
                 [this](uint32_t cid) { this->handle_client_timeout(cid); }) 
         {}
 
+        uint32_t Stop() {
+            if (!_runtime->isInEventLoop()) return outputErrorCode::NotInEventLoop;
+            _heartbeat.stopAll();
+            if (_server) {
+                _server->stop();
+            }
+            _state.setState(State::Stopped);
+            return outputErrorCode::OK;
+        }
+
         uint32_t Start() {
             if (!_runtime->isInEventLoop()) return outputErrorCode::NotInEventLoop;
             
+            auto currentState = _state.getState();
+            if (currentState == State::Stopped) return outputErrorCode::UnknownError; // FIXME: use correct error code if available, but any error works
+            if (currentState == State::Running) return outputErrorCode::OK;
+
             _server = std::make_shared<SuOS::Uds::Server::Uds_Server>(
                 _runtime->getIoContext(),
-                "/tmp/suUDS.sock", // UDS Path
-                5,                 // Timeout
+                SuOS::Uds::ClientMgr::Df::uds_path, // UDS Path                 // Timeout
                 std::bind(&RouterManager::on_uds_message, this, std::placeholders::_1, std::placeholders::_2),
                 std::bind(&RouterManager::on_uds_error, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
                 std::bind(&RouterManager::on_uds_connect, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
             );
 
             _server->start();
-            _heartbeat.startBroadcast([]() -> const std::vector<uint32_t>& {
-                // 这里需要一种方式获取当前所有ID，见下文实现
-                static std::vector<uint32_t> ids; 
-                return ids; // 简化处理，实际开发中需从session map获取
-            });
 
             _state.setState(State::Running);
             return outputErrorCode::OK;
@@ -59,6 +80,13 @@ namespace SuOS::Uds::Router {
         // 核心转发接口
         void route_message(uint32_t sender_usr, uint32_t sender_part, uint32_t receiver_usr, uint32_t receiver_part, const std::vector<uint8_t>& payload) {
             _runtime->dispatch([this, sender_usr, sender_part, receiver_usr, receiver_part, payload]() {
+                if (receiver_usr != SuOS::Config::Usr::ROUTER && sender_usr != SuOS::Config::Usr::ROUTER) {
+                    if (!_auth.authorizeMessage(sender_usr, receiver_usr)) {
+                        std::cerr << "Router Msg Auth Failed: " << sender_usr << " -> " << receiver_usr << std::endl;
+                        return;
+                    }
+                }
+                
                 auto guard = _builder.finalizeEnvelope(sender_part, receiver_usr, receiver_part, payload, sender_usr);
                 std::vector<char> data(guard.data(), guard.data() + guard.size());
                 
@@ -69,13 +97,13 @@ namespace SuOS::Uds::Router {
                     }
 
                     if (receiver_part == SuOS::Config::Part::ROUTER) {
-                        // 处理来自 Main 的控制命令（如强制断开某个客户端）
-                        handle_router_msg(data);
+                        // 处理来自 Main 或其他授权组件的 Router 命令
+                        _router_msg_parser.Parse(payload.data(), payload.size(), sender_usr, sender_part);
                     }
 
                     if (receiver_part == SuOS::Config::Part::USR_CONTROL) {
-                        // 处理控制信息
-                        // 暂时不用
+                        // 处理通用控制消息 (例如来自 Main 的 STOP 指令)
+                        _general_msg_parser.Parse(payload.data(), payload.size(), sender_usr, sender_part);
                     }
                 } else {
                     // 转发给目标 Client
@@ -92,6 +120,14 @@ namespace SuOS::Uds::Router {
 
             if (authorized) {
                 std::cout << "Client Authorized: PID=" << pid << " ID=" << assigned_id << std::endl;
+                
+                if (!_heartbeat_started) {
+                    _heartbeat.startBroadcast();
+                    _heartbeat_started = true;
+                }
+
+                _heartbeat.updateClient(assigned_id);
+
                 // 报告给 Main 模块
                 report_to_main(assigned_id, true);
                 if (_status_cb) _status_cb(assigned_id, true);
@@ -121,43 +157,83 @@ namespace SuOS::Uds::Router {
             route_message(sender_usr, sender_part, target_usr, target_part, payload);
         }
 
-        // 3. 认证逻辑（占位）
+        // 3. 认证逻辑
         bool perform_auth(int pid, int uid, int gid, uint32_t& out_id) {
-            // 这里对接你未来的 Auth Class
-            // 假设分配规则：1000 + pid
-            out_id = 1000 + pid; 
+            std::string execPath;
+            char buf[512];
+            ssize_t len = readlink(("/proc/" + std::to_string(pid) + "/exe").c_str(), buf, sizeof(buf) - 1);
+            if (len != -1) {
+                buf[len] = '\0';
+                execPath = std::string(buf);
+            } else {
+                std::cerr << "Router: Failed to readlink for PID " << pid << std::endl;
+                return false;
+            }
+
+            int auth_id = _auth.authenticateConnection(pid, uid, gid, execPath);
+            if (auth_id == -1) return false;
+            
+            out_id = static_cast<uint32_t>(auth_id);
             return true; 
         }
 
         void report_to_main(uint32_t client_id, bool online) {
-            // 向特殊 ID (MAIN) 发送报告
-            std::vector<uint8_t> report_data = { online ? (uint8_t)1 : (uint8_t)0 };
-            route_message(SuOS::Config::Usr::ROUTER, SuOS::Config::Usr::MAIN, report_data);
+            // 使用 RouterMsg_fromRouterBuilder 构建内部负载
+            if (online) {
+                auto inner = _router_msg_builder.BuildonConnect(client_id);
+                std::vector<uint8_t> payload(inner.data(), inner.data() + inner.size());
+                route_message(SuOS::Config::Usr::ROUTER, SuOS::Config::Part::ROUTER, 
+                             SuOS::Config::Usr::MAIN, SuOS::Config::Part::USR_REPORT, payload);
+            } else {
+                auto inner = _router_msg_builder.BuildonConnectionLost(client_id);
+                std::vector<uint8_t> payload(inner.data(), inner.data() + inner.size());
+                route_message(SuOS::Config::Usr::ROUTER, SuOS::Config::Part::ROUTER, 
+                             SuOS::Config::Usr::MAIN, SuOS::Config::Part::USR_REPORT, payload);
+            }
         }
 
         void handle_client_timeout(uint32_t cid) {
             std::cout << "Client " << cid << " heartbeat timeout. Closing." << std::endl;
             _server->close(cid);
+            _auth.removeEntity(cid);
             report_to_main(cid, false);
             if (_status_cb) _status_cb(cid, false);
         }
 
         void on_uds_error(const uint32_t cid, uint32_t error_type, std::string message) {
             _heartbeat.stopClient(cid);
+            _auth.removeEntity(cid);
             if (_status_cb) _status_cb(cid, false);
         }
 
-        // 辅助：内部发送
+        // 辅助：内部发送//用于心跳
         void raw_send(uint32_t target_id, const std::vector<uint8_t>& payload) {
-            auto guard = _builder.finalizeEnvelope(SuOS::Config::Part::Heartbeat, target_id, SuOS::Config::Part::Heartbeat, payload);
+            auto guard = _builder.finalizeEnvelope(SuOS::Config::Part::HEARTBEAT, target_id, SuOS::Config::Part::HEARTBEAT, payload);
             _server->send_async(target_id, std::vector<char>(guard.data(), guard.data() + guard.size()));
         }
 
         // 处理对象router的msg
-        void handle_router_msg(std::vector<char> data) {
-            // 这里可以处理来自 Main 的控制命令
-            auto guard = _parser.ParseMsg(reinterpret_cast<const uint8_t*>(data.data()), data.size());
+        void handle_enable_app_register(uint32_t sender_usr, uint32_t sender_part, uint32_t app_id) {
+            // 权限检查：只有 Main 有权执行此操作
+            if (sender_usr != SuOS::Config::Usr::MAIN) return;
+            
+            std::cout << "Router: Enabling App Register for AppID=" << app_id << std::endl;
+            _auth.updateAppAllowedState(app_id, true);
+        }
 
+        void handle_stop_request(uint32_t usr, uint32_t part) {
+            if (usr == SuOS::Config::Usr::MAIN) {
+                std::cout << "Router: Received Stop Request from Main." << std::endl;
+                Stop();
+            }
+        }
+
+        void handle_stop_kill(uint32_t usr, uint32_t part) {
+            if (usr == SuOS::Config::Usr::MAIN) {
+                std::cout << "Router: Received Stop Kill from Main. Exiting." << std::endl;
+                Stop();
+                // 在异步环境中通常由外部管理生命周期，此处仅停止服务
+            }
         }
 
         std::shared_ptr<SuOS::Runtime::suRuntime> _runtime;
@@ -166,7 +242,11 @@ namespace SuOS::Uds::Router {
         Router_Heartbeat _heartbeat;
         SuOS::Uds::Msg::MessageBuilder _builder;
         SuOS::Uds::Msg::MessageParser _parser;
-        SuOS::Uds::Msg::Router::RouterMsgBuilder _router_msg_builder;
+        SuOS::Uds::Msg::Router::RouterMsg_fromRouterBuilder _router_msg_builder;
+        SuOS::Uds::Msg::Router::RouterMsg_toRouterParser _router_msg_parser;
+        SuOS::Uds::Msg::General::GeneralMsg_fromMainParser _general_msg_parser;
         OnClientStatus _status_cb;
+        SuOS::Router::RouterAuthManager _auth;
+        bool _heartbeat_started = false;
     };
 }

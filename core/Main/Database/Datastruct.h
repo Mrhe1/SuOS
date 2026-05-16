@@ -58,7 +58,7 @@ namespace SuOS {
 
 
         // 1. 业务对象
-                struct APPConfig {
+        struct APPConfig {
             int id;
             std::string name;
             int linux_id[3];

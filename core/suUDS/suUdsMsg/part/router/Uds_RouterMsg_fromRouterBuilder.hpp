@@ -19,16 +19,6 @@ namespace SuOS::Uds::Msg::Router {
             flatbuffers::FlatBufferBuilder& _fbb;
         };
         RouterMsg_fromRouterBuilder(std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _runtime(runtime) {}
-        // 构建 enableAppRegister 消息
-        LockGuard BuildenableAppRegister(uint32_t app_id) {
-            if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
-            fbb_.Clear();
-
-            auto table = CreateenableAppRegister(fbb_, app_id);
-            auto root = CreateRouterEnvelope_fromRouter(fbb_, RouterPayload_fromRouter_enableAppRegister, table.Union());
-            fbb_.Finish(root);
-            return LockGuard(fbb_);
-        }
         // 构建 onConnect 消息
         LockGuard BuildonConnect(uint32_t id) {
             if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");

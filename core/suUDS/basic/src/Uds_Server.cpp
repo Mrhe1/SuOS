@@ -142,7 +142,7 @@ namespace SuOS::Uds::Server {
     };
 
     Uds_Server::Uds_Server(io_context& ioc, const std::string path,
-        int timeout_sec, MessageCallback cb, onError onEr, onConnected oncted)
+        MessageCallback cb, onError onEr, onConnected oncted)
         : acceptor_(ioc), socket_(ioc), timer_(ioc), path_(path),
         on_msg_(cb), on_connected_(oncted), on_error_(onEr) {
     }

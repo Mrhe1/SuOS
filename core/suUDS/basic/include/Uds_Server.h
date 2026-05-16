@@ -31,7 +31,6 @@ namespace SuOS::Uds::Server {
         Uds_Server(boost::asio::io_context& ioc,
             //const uint32_t cid,
             const std::string path,
-            int timeout_sec,
             MessageCallback cb,
             onError onEr,
             onConnected oncted);
