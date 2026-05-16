@@ -60,6 +60,18 @@ namespace SuOS {
             constexpr uint32_t HEARTBEAT = 10017;
         }
 
+        namespace usrAcl {
+            constexpr std::string_view all_accessible = "all_accessible";
+            constexpr std::string_view core_only = "core_only";
+            constexpr std::string_view out_optional = "out_optional";
+        }
+
+        namespace partAcl {
+            constexpr std::string_view all_accessible = "all_accessible";
+            constexpr std::string_view core_only = "core_only";
+            constexpr std::string_view out_optional = "out_optional";
+        }
+
         // namespace CommandId {
         //     constexpr uint32_t heartbeat_id = 100001;
         //     // main命令一个usr（进程）stop
