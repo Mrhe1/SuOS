@@ -4,7 +4,7 @@ usrs:
     name: "All" #泛指所有用户
     group: "special"
     linux_id: [-1,-1,-1] 
-        acl: "all_accessible"  #无实际地址不能访问
+    acl: "all_accessible"  #无实际地址不能访问
     status: "idle"
     path: ""
 
@@ -130,6 +130,31 @@ part:
   - id: 10012
     name: "Router"
     father_name: "Router"
+    acl: "all_accessible"
+
+  - id: 10013
+    name: "APP_Graphics_RGA"
+    father_name: "APP_Container"
+    acl: "core_only"
+
+  - id: 10014
+    name: "Usr_Control"
+    father_name: "Main"
+    acl: "all_accessible"
+
+  - id: 10015
+    name: "Usr_Report"
+    father_name: "All"
+    acl: "all_accessible"
+
+  - id: 10016
+    name: "Display_RGA" #此驱动需要根据appmanager的消息进行图层区域合法性检查
+    father_name: "Graphic"
+    acl: "out_optional"
+
+  - id: 10017
+    name: "Heartbeat"
+    father_name: "All"
     acl: "all_accessible"
 
 apps:

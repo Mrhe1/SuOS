@@ -1,3 +1,4 @@
+// AUTO GENERATED DO NOT EDIT
 #pragma once
 #ifndef UDS_GRAPHICSMSG_FROMRGA_PARSER_HPP
 #define UDS_GRAPHICSMSG_FROMRGA_PARSER_HPP
@@ -10,12 +11,12 @@
 namespace SuOS::Uds::Msg::Graphics {
     class GraphicsMsg_FromRgaParser {
     public:
-        using RgaResponseCallback = std::function<void(uint32_t job_id, uint32_t err_code)>;
+        using RgaResponseCallback = std::function<void(uint32_t usr, uint32_t part, uint32_t job_id, uint32_t err_code)>;
         struct Callbacks {
             RgaResponseCallback onRgaResponse;
         };
         GraphicsMsg_FromRgaParser(std::shared_ptr<SuOS::Runtime::suRuntime> runtime, Callbacks cbs) : _runtime(runtime), _callbacks(cbs) {}
-        void Parse(const uint8_t* buffer, size_t size) {
+        void Parse(const uint8_t* buffer, size_t size, uint32_t usr = 0, uint32_t part = 0) {
             if (!_runtime->isInEventLoop()) return;
             flatbuffers::Verifier v(buffer, size);
             if (!VerifyFromRgaEnvelopeBuffer(v)) return;
@@ -28,7 +29,7 @@ namespace SuOS::Uds::Msg::Graphics {
                         (void)table;
                     auto job_id_val = table->job_id();
                     auto err_code_val = table->err_code();
-                        _callbacks.onRgaResponse(job_id_val, err_code_val);
+                        _callbacks.onRgaResponse(usr, part, job_id_val, err_code_val);
                     }
                     break;
                 }

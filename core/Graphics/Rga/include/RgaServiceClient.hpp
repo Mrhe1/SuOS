@@ -18,13 +18,14 @@ public:
 
     using JobCallback = std::function<void(uint32_t err_code)>;
 
-    RgaServiceClient(std::shared_ptr<SuOS::Runtime::suRuntime> runtime, uint32_t app_part_id, SendFunc send_cb)
-        : _runtime(runtime), _part_id(app_part_id), _send_cb(send_cb), _builder(runtime) 
+    RgaServiceClient(std::shared_ptr<SuOS::Runtime::suRuntime> runtime, SendFunc send_cb)
+        : _runtime(runtime), _send_cb(send_cb), _builder(runtime) 
     {
         _gen.seed(_rd());
         GraphicsMsg_FromRgaParser::Callbacks cbs;
 
-        cbs.onRgaResponse = [this](uint32_t job_id, uint32_t err_code) {
+        cbs.onRgaResponse = [this](uint32_t s, uint32_t p, uint32_t job_id, uint32_t err_code) {
+            (void)s; (void)p;
             auto it = _pending_jobs.find(job_id);
             if (it != _pending_jobs.end()) {
                 if (it->second) it->second(err_code);
@@ -181,12 +182,12 @@ private:
     void doSend(const uint8_t* data, size_t size) {
         if (_send_cb) {
             std::vector<uint8_t> payload(data, data + size);
-            _send_cb(_part_id, SuOS::Config::Usr::GRAPHIC, SuOS::Config::Part::DISPLAY, payload);
+            _send_cb(_part_id, SuOS::Config::Usr::GRAPHIC, SuOS::Config::Part::DISPLAY_RGA, payload);
         }
     }
 
     std::shared_ptr<SuOS::Runtime::suRuntime> _runtime;
-    uint32_t _part_id;
+    uint32_t _part_id = SuOS::Config::Part::APP_GRAPHICS_RGA;
     SendFunc _send_cb;
     GraphicsMsg_ToRgaBuilder _builder;
     std::unique_ptr<GraphicsMsg_FromRgaParser> _parser;
@@ -196,5 +197,4 @@ private:
     std::mt19937 _gen;
     std::uniform_int_distribution<uint32_t> _dist{1, 0xFFFFFFFF};
 };
-
-} // namespace SuOS::Uds::Msg::Graphics
+}

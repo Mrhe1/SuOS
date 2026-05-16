@@ -33,6 +33,7 @@ namespace SuOS {
         }
 
         namespace usrGroup {
+            // app属于out但不属于usr故不列出
             constexpr std::string_view core = "core";
             constexpr std::string_view special = "special";
         }
@@ -52,9 +53,11 @@ namespace SuOS {
             constexpr uint32_t HTTP_CLIENT = 10010;
             constexpr uint32_t APP_CONTAINER = 10011;
             constexpr uint32_t ROUTER = 10012;
-            constexpr uint32_t Heartbeat = 10013;
-            // main和service基类间关于进程控制的通信
-            constexpr uint32_t Usr_Control = 10014;
+            constexpr uint32_t APP_GRAPHICS_RGA = 10013;
+            constexpr uint32_t USR_CONTROL = 10014;
+            constexpr uint32_t USR_REPORT = 10015;
+            constexpr uint32_t DISPLAY_RGA = 10016;
+            constexpr uint32_t HEARTBEAT = 10017;
         }
 
         // namespace CommandId {

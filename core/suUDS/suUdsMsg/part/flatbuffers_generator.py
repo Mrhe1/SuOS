@@ -196,7 +196,8 @@ class CodeGenerator:
             methods.append(method)
 
         all_methods = "".join(methods)
-        builder_content = f"""#pragma once
+        builder_content = f"""// AUTO GENERATED DO NOT EDIT
+#pragma once
 #ifndef UDS_{class_name.upper()}_BUILDER_HPP
 #define UDS_{class_name.upper()}_BUILDER_HPP
 #include "{self.fbs_path.stem}_generated.h"
@@ -230,9 +231,9 @@ namespace {ns_cpp} {{
         parser_path = self.output_dir / f"Uds_{class_name}Parser.hpp"
         
         # 获取 Root Table 的字段，用于在 Parser 回调中传递
-        root_cb_args_def = []
+        root_cb_args_def = ["uint32_t usr", "uint32_t part"]
         root_extract_list = []
-        root_call_args_list = []
+        root_call_args_list = ["usr", "part"]
         if root_table:
             for f in root_table.fields:
                 if f.name != "payload":
@@ -277,7 +278,13 @@ namespace {ns_cpp} {{
                 elif f.is_vector:
                     cpp_t = self._get_cpp_type(f.type)
                     extract_list.append(f"                    std::vector<{cpp_t}> {f.name}_val;")
-                    extract_list.append(f"                    if (table->{f.name}()) {f.name}_val.assign(table->{f.name}()->begin(), table->{f.name}()->end());")
+                    extract_list.append(f"                    if (auto vec_ptr = table->{f.name}()) {{")
+                    extract_list.append(f"                        {f.name}_val.reserve(vec_ptr->size());")
+                    if self._is_struct(f.type):
+                        extract_list.append(f"                        for (auto item : *vec_ptr) {f.name}_val.push_back(*item);")
+                    else:
+                        extract_list.append(f"                        for (auto item : *vec_ptr) {f.name}_val.push_back(item);")
+                    extract_list.append(f"                    }}")
                     call_args_list.append(f"{f.name}_val")
                 else:
                     extract_list.append(f"                    auto {f.name}_val = table->{f.name}();")
@@ -302,7 +309,8 @@ namespace {ns_cpp} {{
                 }}""")
         all_cases = "\n".join(cases_list)
 
-        parser_content = f"""#pragma once
+        parser_content = f"""// AUTO GENERATED DO NOT EDIT
+#pragma once
 #ifndef UDS_{class_name.upper()}_PARSER_HPP
 #define UDS_{class_name.upper()}_PARSER_HPP
 #include "{self.fbs_path.stem}_generated.h"
@@ -319,7 +327,7 @@ namespace {ns_cpp} {{
 {cb_vars_str}
         }};
         {class_name}Parser(std::shared_ptr<SuOS::Runtime::suRuntime> runtime, Callbacks cbs) : _runtime(runtime), _callbacks(cbs) {{}}
-        void Parse(const uint8_t* buffer, size_t size) {{
+        void Parse(const uint8_t* buffer, size_t size, uint32_t usr = 0, uint32_t part = 0) {{
             if (!_runtime->isInEventLoop()) return;
             flatbuffers::Verifier v(buffer, size);
             if (!Verify{self.schema.root_type}Buffer(v)) return;

@@ -64,7 +64,7 @@ namespace SuOS::Uds::Router {
                 
                 if (receiver_usr == SuOS::Config::Usr::ROUTER) {
                     // 发给自己的消息（如心跳响应）内部消化
-                    if (receiver_part == SuOS::Config::Part::Heartbeat) {
+                    if (receiver_part == SuOS::Config::Part::HEARTBEAT) {
                         _heartbeat.updateClient(sender_usr);
                     }
 

@@ -1,14 +1,14 @@
 // AUTO GENERATED DO NOT EDIT
 #pragma once
-#ifndef UDS_GRAPHICSMSG_FROMRGA_BUILDER_HPP
-#define UDS_GRAPHICSMSG_FROMRGA_BUILDER_HPP
-#include "GraphicsMsg_FromRga_generated.h"
+#ifndef UDS_ROUTERMSG_TOROUTER_BUILDER_HPP
+#define UDS_ROUTERMSG_TOROUTER_BUILDER_HPP
+#include "RouterMsg_toRouter_generated.h"
 #include "suRuntime.hpp"
 #include <memory>
 #include <vector>
 #include <stdexcept>
-namespace SuOS::Uds::Msg::Graphics {
-    class GraphicsMsg_FromRgaBuilder {
+namespace SuOS::Uds::Msg::Router {
+    class RouterMsg_toRouterBuilder {
     public:
         class LockGuard {
         public:
@@ -18,14 +18,14 @@ namespace SuOS::Uds::Msg::Graphics {
         private:
             flatbuffers::FlatBufferBuilder& _fbb;
         };
-        GraphicsMsg_FromRgaBuilder(std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _runtime(runtime) {}
-        // 构建 RgaResponse 消息
-        LockGuard BuildRgaResponse(uint32_t job_id, uint32_t err_code) {
+        RouterMsg_toRouterBuilder(std::shared_ptr<SuOS::Runtime::suRuntime> runtime) : _runtime(runtime) {}
+        // 构建 enableAppRegister 消息
+        LockGuard BuildenableAppRegister(uint32_t app_id) {
             if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
             fbb_.Clear();
 
-            auto table = CreateRgaResponse(fbb_, job_id, err_code);
-            auto root = CreateFromRgaEnvelope(fbb_, FromRgaPayload_RgaResponse, table.Union());
+            auto table = CreateenableAppRegister(fbb_, app_id);
+            auto root = CreateRouterEnvelope_toRouter(fbb_, RouterPayload_toRouter_enableAppRegister, table.Union());
             fbb_.Finish(root);
             return LockGuard(fbb_);
         }
