@@ -54,7 +54,7 @@ public:
      *           如果提供了回调，任务完成后会自动触发回调，并返回 0。
      * @return int 成功时返回 fence fd (无回调) 或 0 (有回调)；失败返回 -1
      */
-    int submit(const RgaChain& chain, RgaCallback cb);
+    int submit(const RgaChain& chain, RgaCallback cb = nullptr, int in_fence_fd = -1);
 
     // 引擎内部：从 epoll 树和活跃列表中移除句柄
     void removeHandle(RgaJobHandle* handle_ptr, uint32_t final_err_code);

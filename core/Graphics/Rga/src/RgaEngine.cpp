@@ -73,7 +73,7 @@ IM_USAGE RgaEngine::getRotationUsage(int angle) {
     }
 }
 
-int RgaEngine::submit(const RgaChain& chain, RgaCallback cb) {
+int RgaEngine::submit(const RgaChain& chain, RgaCallback cb, int in_fence_fd) {
     auto handle = std::make_shared<RgaJobHandle>(this);
     handle->user_callback = cb;
 
@@ -94,13 +94,14 @@ int RgaEngine::submit(const RgaChain& chain, RgaCallback cb) {
         return wrapbuffer_handle(handle_pool[ptr], cfg.width, cfg.height, cfg.format, ptr->getWidth(), ptr->getHeight());
     };
 
-    int current_in_fence = -1; 
+    int current_in_fence = in_fence_fd; 
     int current_out_fence = -1;
 
     for (const auto& step : chain.steps) {
         im_job_handle_t job_id = imbeginJob();
         handle->rga_job_ids.push_back(job_id);
 
+        // ... existing code ...
         // 从池中按需获取组装好的 src / dst 参数，完美支持显存异构和重复组合
         rga_buffer_t r_src = get_bundled_buffer(step.src, step.src_cfg);
         rga_buffer_t r_dst = get_bundled_buffer(step.dst, step.dst_cfg);
@@ -164,7 +165,9 @@ int RgaEngine::submit(const RgaChain& chain, RgaCallback cb) {
 
         imendJob(job_id, IM_ASYNC, current_in_fence, &current_out_fence); 
 
-        if (current_in_fence >= 0) {
+        // RGA 驱动通常会消耗(close)传入的 fence fd，但为了严谨起见，
+        // 我们只在非首次循环（即内部产生的 fence）时手动 close
+        if (current_in_fence >= 0 && current_in_fence != in_fence_fd) {
             close(current_in_fence);
         }
         current_in_fence = current_out_fence; 

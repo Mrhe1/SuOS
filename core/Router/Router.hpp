@@ -73,7 +73,7 @@ namespace SuOS::Uds::Router {
                         handle_router_msg(data);
                     }
 
-                    if (receiver_part == SuOS::Config::Part::Usr_Control) {
+                    if (receiver_part == SuOS::Config::Part::USR_CONTROL) {
                         // 处理控制信息
                         // 暂时不用
                     }

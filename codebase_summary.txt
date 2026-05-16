@@ -1,10 +1,10 @@
 项目核心文件功能索引 (全量感知):
 
 [SuOS.h] : 包含标准输入输出头文件，作为项目统一包含文件。
-[core/Graphics/Rga/include/RgaEngine.hpp] : 封装 RGA 硬件加速的异步任务提交与 epoll 事件驱动引擎。
-[core/Graphics/Rga/include/RgaRemoteProxy.hpp] : 提供远程代理接口，用于跨进程或跨设备调用RGA图形处理功能。
-[core/Graphics/Rga/include/RgaService.hpp] : 解析并处理图形RGA请求，调用引擎执行图像操作。
-[core/Graphics/Rga/include/RgaServiceClient.hpp] : 封装RGA图形处理服务的客户端，用于构建和发送图形处理请求。
+[code_Summarizer.py] : AI 总结失败
+[core/Graphics/Rga/include/RgaEngine.hpp] : AI 总结失败
+[core/Graphics/Rga/include/RgaService.hpp] : AI 总结失败
+[core/Graphics/Rga/include/RgaServiceClient.hpp] : AI 总结失败
 [core/Graphics/Rga/include/RgaTypes.hpp] : 定义RGA图形处理任务的配置、步骤与链式调用接口。
 [core/Graphics/Vram/VramProvider.hpp] : 提供显存管理与DRM/RGA硬件加速的缓冲区生命周期控制。
 [core/Graphics/Vtimer/VTimerHardwareAdapter.hpp] : 通过 DRM 接口监听硬件 VSync 信号并触发 VTimer 分发。
@@ -15,12 +15,12 @@
 [core/Main/include/main.h] : 封装主程序类，集成运行时与数据库管理器，提供初始化与运行接口。
 [core/Network_service/Connectors/base/BaseConn_def.hpp] : 定义网络连接器的错误码和动作ID枚举
 [core/Network_service/Connectors/base/BaseConnection.hpp] : 定义网络连接基类与监听器接口，封装连接、断开、发送等核心操作。
-[core/Router/Router.hpp] : 管理UDS服务器，实现客户端消息路由、心跳检测与状态管理。
+[core/Router/Router.hpp] : AI 总结失败
 [core/Router/Router_ErrorCode.h] : 定义Uds路由模块的内部与外部错误码常量
 [core/Router/Router_Heartbeat.hpp] : 管理心跳包的发送与超时检测，维护客户端连接状态。
 [core/Router/Router_State.hpp] : 管理路由器状态的线程安全类，支持状态枚举与读写操作。
 [core/Router/suRouterAuth.hpp] : 管理动态白名单并基于进程路径、UID/GID进行连接鉴权。
-[core/SuOS_Config.h] : 定义SuOS系统应用、组件的ID及配置路径常量。
+[core/SuOS_Config.h] : AI 总结失败
 [core/SysService/SysService.hpp] : 提供系统服务基类，封装UDS通信、消息解析与生命周期管理。
 [core/SysService/sysService_df.h] : 定义系统服务停止原因的常量枚举
 [core/suRuntime/include/suRuntime.hpp] : 提供基于Boost.Asio的异步任务调度与线程池管理，支持延时、周期执行及线程安全分发。
@@ -34,34 +34,35 @@
 [core/suUDS/suUdsMgr/Uds_df.h] : 定义UDS客户端连接与心跳的配置常量
 [core/suUDS/suUdsMsg/Uds_MsgBuilder.hpp] : 使用 FlatBuffers 构建 UDS 消息信封，提供线程不安全的单次构建接口。
 [core/suUDS/suUdsMsg/Uds_MsgParser.hpp] : 解析UDS消息缓冲区，验证FlatBuffers格式并提取消息字段。
-[core/suUDS/suUdsMsg/part/flatbuffers_generator.py] : 解析 FlatBuffers schema 文件并生成对应代码。
+[core/suUDS/suUdsMsg/part/flatbuffers_generator.py] : AI 总结失败
 [core/suUDS/suUdsMsg/part/general/GeneralMsg_fromMain.fbs] : 定义空消息类型和Union，用于封装来自主线程的通用消息。
 [core/suUDS/suUdsMsg/part/general/GeneralMsg_fromMain_generated.h] : 定义从主线程发送的通用消息结构，包含用户停止请求和停止杀死消息。
 [core/suUDS/suUdsMsg/part/general/GeneralMsg_toMain.fbs] : 定义用于主进程通信的通用空消息封装结构。
 [core/suUDS/suUdsMsg/part/general/GeneralMsg_toMain_generated.h] : 定义用于主程序通信的FlatBuffers通用消息封装结构。
-[core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_fromMainBuilder.hpp] : 使用 FlatBuffers 构建从主程序发送的 UDS 消息（如停止请求）。
-[core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_fromMainParser.hpp] : 解析来自主线程的通用UDS消息，触发用户停止请求或终止回调。
-[core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_toMainBuilder.hpp] : 构建UDS通用消息到主进程的FlatBuffers构建器，支持UsrStopResponse等消息生成。
-[core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_toMainParser.hpp] : 解析UDS通用消息并分发回调，支持用户停止响应处理。
+[core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_fromMainBuilder.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_fromMainParser.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_toMainBuilder.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_toMainParser.hpp] : AI 总结失败
 [core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_FromRga.fbs] : 定义从RGA模块接收图形响应消息的数据结构
 [core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_FromRga_generated.h] : 定义FlatBuffers消息结构，用于RGA图形响应的序列化与反序列化。
 [core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_ToRga.fbs] : 定义RGA图形处理任务的消息格式，支持拷贝、旋转、填充等16种操作。
 [core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_ToRga_generated.h] : 定义FlatBuffers序列化结构，封装RGA图形处理任务类型与数据格式。
-[core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_FromRgaBuilder.hpp] : 构建RGA响应消息的FlatBuffers构建器
-[core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_FromRgaParser.hpp] : 解析来自RGA的图形消息，验证FlatBuffers格式并触发回调。
-[core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_ToRgaBuilder.hpp] : 构建图形RGA操作消息的FlatBuffers序列化器
-[core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_ToRgaParser.hpp] : 解析图形消息并触发RGA操作回调
+[core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_FromRgaBuilder.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_FromRgaParser.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_ToRgaBuilder.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_ToRgaParser.hpp] : AI 总结失败
 [core/suUDS/suUdsMsg/part/router/RouterMsg_fromRouter.fbs] : 定义路由器向其他组件发送的连接与注册消息结构。
 [core/suUDS/suUdsMsg/part/router/RouterMsg_fromRouter_generated.h] : 定义了从路由器接收消息的 FlatBuffers 结构体和枚举类型。
 [core/suUDS/suUdsMsg/part/router/RouterMsg_toRouter.fbs] : 定义路由器接收的启用应用注册消息结构
 [core/suUDS/suUdsMsg/part/router/RouterMsg_toRouter_generated.h] : 定义路由器间通信的FlatBuffers消息结构，支持应用注册功能。
-[core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_fromRouterBuilder.hpp] : 构建并序列化从路由器到其他组件的 FlatBuffers 消息。
-[core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_fromRouterParser.hpp] : 解析来自路由器的FlatBuffers消息并触发相应回调。
-[core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_toRouterBuilder.hpp] : 使用 FlatBuffers 构建并封装 UDS 路由器消息（如应用注册）的生成器。
-[core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_toRouterParser.hpp] : 解析路由器消息，根据类型调用应用注册回调。
+[core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_fromRouterBuilder.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_fromRouterParser.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_toRouterBuilder.hpp] : AI 总结失败
+[core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_toRouterParser.hpp] : AI 总结失败
 [core/suUDS/suUdsMsg/partExample/Uds_PartExampleBuilder.hpp] : 使用 FlatBuffers 构建 UDS 消息的工厂类，支持多种消息类型。
 [core/suUDS/suUdsMsg/partExample/Uds_PartExampleParser.hpp] : 解析UDS消息负载，根据类型调用对应回调函数处理数据。
 [core/suUDS/suUdsMsg/partExample/suUdsPartExample.fbs] : 定义UDS协议消息的FlatBuffers结构，支持多种消息类型封装。
 [core/suUDS/suUdsMsg/partExample/suUdsPartExample_generated.h] : 使用 FlatBuffers 定义 UDS 消息的序列化结构与枚举类型。
 [core/suUDS/suUdsMsg/suUdsMsg.fbs] : 定义 UDS 消息信封结构，用于封装发送者、接收者及负载数据。
 [core/suUDS/suUdsMsg/suUdsMsg_generated.h] : 定义UDS消息信封结构，用于序列化通信数据。
+[sync_config.py] : AI 总结失败

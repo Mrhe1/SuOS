@@ -4,20 +4,16 @@
     "h": "73ce89d34cdd18d734337c2e26160902"
   },
   "core/Graphics/Rga/include/RgaEngine.hpp": {
-    "s": "封装 RGA 硬件加速的异步任务提交与 epoll 事件驱动引擎。",
-    "h": "a234501c507aaf20005f20caf05126cc"
-  },
-  "core/Graphics/Rga/include/RgaRemoteProxy.hpp": {
-    "s": "提供远程代理接口，用于跨进程或跨设备调用RGA图形处理功能。",
-    "h": "68b329da9893e34099c7d8ad5cb9c940"
+    "s": "AI 总结失败",
+    "h": "56ca53d24e4cf85bf3effe79287d6bcf"
   },
   "core/Graphics/Rga/include/RgaService.hpp": {
-    "s": "解析并处理图形RGA请求，调用引擎执行图像操作。",
-    "h": "32ddf57d0762a80452ce5b6e51a4ee5e"
+    "s": "AI 总结失败",
+    "h": "2548f0cd6e62315ac7bc126062553648"
   },
   "core/Graphics/Rga/include/RgaServiceClient.hpp": {
-    "s": "封装RGA图形处理服务的客户端，用于构建和发送图形处理请求。",
-    "h": "89b21a9df16c601c9c24e28472e5258f"
+    "s": "AI 总结失败",
+    "h": "d47eb8edbce942e27652d9ed8edf6d11"
   },
   "core/Graphics/Rga/include/RgaTypes.hpp": {
     "s": "定义RGA图形处理任务的配置、步骤与链式调用接口。",
@@ -60,8 +56,8 @@
     "h": "8e2f89c4bf15f0c974374d97f9eccf70"
   },
   "core/Router/Router.hpp": {
-    "s": "管理UDS服务器，实现客户端消息路由、心跳检测与状态管理。",
-    "h": "061b55e88877532f8ed5ebbc524050fe"
+    "s": "AI 总结失败",
+    "h": "5eebe343fe680f03b32d28b1b058e188"
   },
   "core/Router/Router_ErrorCode.h": {
     "s": "定义Uds路由模块的内部与外部错误码常量",
@@ -80,8 +76,8 @@
     "h": "e0a627f286cb5095e46f397e77671591"
   },
   "core/SuOS_Config.h": {
-    "s": "定义SuOS系统应用、组件的ID及配置路径常量。",
-    "h": "d60b6de284d271e28edd42527ba3caa5"
+    "s": "AI 总结失败",
+    "h": "9a3170b58b8abb8b5b2201a484aa2f27"
   },
   "core/SysService/SysService.hpp": {
     "s": "提供系统服务基类，封装UDS通信、消息解析与生命周期管理。",
@@ -136,8 +132,8 @@
     "h": "592b77abfea746937e0c6ddd115cc4a4"
   },
   "core/suUDS/suUdsMsg/part/flatbuffers_generator.py": {
-    "s": "解析 FlatBuffers schema 文件并生成对应代码。",
-    "h": "9fb7fbe4df6744b2a48ce38f43fdfbfe"
+    "s": "AI 总结失败",
+    "h": "553135f6791d8c98c456e864ea5b7e04"
   },
   "core/suUDS/suUdsMsg/part/general/GeneralMsg_fromMain.fbs": {
     "s": "定义空消息类型和Union，用于封装来自主线程的通用消息。",
@@ -156,20 +152,20 @@
     "h": "43e5241ee08b78744d29a90eb15f5eda"
   },
   "core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_fromMainBuilder.hpp": {
-    "s": "使用 FlatBuffers 构建从主程序发送的 UDS 消息（如停止请求）。",
-    "h": "431f421ffe092410ab5945a83ffed809"
+    "s": "AI 总结失败",
+    "h": "d8bdc6d76eafe5e2508632c6c2f2c570"
   },
   "core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_fromMainParser.hpp": {
-    "s": "解析来自主线程的通用UDS消息，触发用户停止请求或终止回调。",
-    "h": "a2740527176eea41e83b90ac93f77fbc"
+    "s": "AI 总结失败",
+    "h": "98ea1d68ed93c54ae58333221fa37a8c"
   },
   "core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_toMainBuilder.hpp": {
-    "s": "构建UDS通用消息到主进程的FlatBuffers构建器，支持UsrStopResponse等消息生成。",
-    "h": "8babed983d28531c1a61ae9a8ab33e8d"
+    "s": "AI 总结失败",
+    "h": "d499b320a2179f90bc752e4d8c8db764"
   },
   "core/suUDS/suUdsMsg/part/general/Uds_GeneralMsg_toMainParser.hpp": {
-    "s": "解析UDS通用消息并分发回调，支持用户停止响应处理。",
-    "h": "8981a524fb586c18a91dbc685ceb59d7"
+    "s": "AI 总结失败",
+    "h": "53b55a81a3329697baf959a73e39ddc1"
   },
   "core/suUDS/suUdsMsg/part/graphics/rga/GraphicsMsg_FromRga.fbs": {
     "s": "定义从RGA模块接收图形响应消息的数据结构",
@@ -188,20 +184,20 @@
     "h": "cd5a41594e053b1b88779fcded1ceb82"
   },
   "core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_FromRgaBuilder.hpp": {
-    "s": "构建RGA响应消息的FlatBuffers构建器",
-    "h": "d2d9d244b323126a6f57870c704e21cf"
+    "s": "AI 总结失败",
+    "h": "1ccc6972733fc73df6aa8e6b22ecc649"
   },
   "core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_FromRgaParser.hpp": {
-    "s": "解析来自RGA的图形消息，验证FlatBuffers格式并触发回调。",
-    "h": "6838ad2ae601604f766b0c7fe0100570"
+    "s": "AI 总结失败",
+    "h": "31cc88d8756bdbbdf7904bf364e03aa4"
   },
   "core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_ToRgaBuilder.hpp": {
-    "s": "构建图形RGA操作消息的FlatBuffers序列化器",
-    "h": "17e6658ae2a4062628c3098482214170"
+    "s": "AI 总结失败",
+    "h": "185a597d1a9d01227d2fdf999728018f"
   },
   "core/suUDS/suUdsMsg/part/graphics/rga/Uds_GraphicsMsg_ToRgaParser.hpp": {
-    "s": "解析图形消息并触发RGA操作回调",
-    "h": "9f42a9927efb6dfbce23e0df44d73923"
+    "s": "AI 总结失败",
+    "h": "ef45b6f701752cca8ea717b4cdbe0ecc"
   },
   "core/suUDS/suUdsMsg/part/router/RouterMsg_fromRouter.fbs": {
     "s": "定义路由器向其他组件发送的连接与注册消息结构。",
@@ -220,20 +216,20 @@
     "h": "a7b753270b12869eaa99510ab0cd15ea"
   },
   "core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_fromRouterBuilder.hpp": {
-    "s": "构建并序列化从路由器到其他组件的 FlatBuffers 消息。",
-    "h": "df20d45b61e5554849e007cbb9f6929d"
+    "s": "AI 总结失败",
+    "h": "ab0e890a313402bc0491fa1aed2041ab"
   },
   "core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_fromRouterParser.hpp": {
-    "s": "解析来自路由器的FlatBuffers消息并触发相应回调。",
-    "h": "6b5e618813c430c1f2555c92c965ad23"
+    "s": "AI 总结失败",
+    "h": "29ccc0914a1f92cede2651e7340b3d25"
   },
   "core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_toRouterBuilder.hpp": {
-    "s": "使用 FlatBuffers 构建并封装 UDS 路由器消息（如应用注册）的生成器。",
-    "h": "ee40c8d15f4ac44b2f2371428b973f01"
+    "s": "AI 总结失败",
+    "h": "468be68723e5e7d6e1b9178ae1d40cdb"
   },
   "core/suUDS/suUdsMsg/part/router/Uds_RouterMsg_toRouterParser.hpp": {
-    "s": "解析路由器消息，根据类型调用应用注册回调。",
-    "h": "75badba4f052a93e6683391cf8a37b12"
+    "s": "AI 总结失败",
+    "h": "b8723321c3037deb901955fd3c07ad49"
   },
   "core/suUDS/suUdsMsg/partExample/Uds_PartExampleBuilder.hpp": {
     "s": "使用 FlatBuffers 构建 UDS 消息的工厂类，支持多种消息类型。",
@@ -258,5 +254,13 @@
   "core/suUDS/suUdsMsg/suUdsMsg_generated.h": {
     "s": "定义UDS消息信封结构，用于序列化通信数据。",
     "h": "e631415c926a531cec7ea2070614270a"
+  },
+  "code_Summarizer.py": {
+    "s": "AI 总结失败",
+    "h": "97855f33f33e1b9ab3070af132260fd4"
+  },
+  "sync_config.py": {
+    "s": "AI 总结失败",
+    "h": "cdfb9b560a2edbfca85ad457ea014062"
   }
 }
