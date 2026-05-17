@@ -12,6 +12,7 @@
 #include "Uds_RouterMsg_toRouterParser.hpp"
 #include "Uds_GeneralMsg_fromMainParser.hpp"
 #include "Uds_GeneralMsg_toMainBuilder.hpp"
+#include "Uds_GeneralMsg_toMainParser.hpp"
 #include "suRuntime.hpp"
 #include "SuOS_Config.h"
 #include <iostream>
@@ -24,11 +25,10 @@ namespace SuOS::Uds::Router {
 
     class RouterManager : public std::enable_shared_from_this<RouterManager> {
     public:
-        using OnClientStatus = std::function<void(uint32_t client_id, bool online)>;
+        //using OnClientStatus = std::function<void(uint32_t client_id, bool online)>;
 
-        RouterManager(std::shared_ptr<SuOS::Runtime::suRuntime> runtime, OnClientStatus status_cb)
+        RouterManager(std::shared_ptr<SuOS::Runtime::suRuntime> runtime)
             : _runtime(runtime), 
-              _status_cb(status_cb),
               _builder(runtime),
               _parser(runtime),
               _router_msg_builder(runtime),
@@ -41,16 +41,17 @@ namespace SuOS::Uds::Router {
                   [this](uint32_t usr, uint32_t part) { this->handle_stop_request(usr, part); },
                   [this](uint32_t usr, uint32_t part) { this->handle_stop_kill(usr, part); }
               }),
+              _general_msg_builder(runtime),
               _heartbeat(runtime, 
                 [this](uint32_t tid, const std::vector<uint8_t>& p) { this->raw_send(tid, p); },
-                [this](uint32_t cid) { this->handle_client_timeout(cid); }) 
-        {}
+                [this](uint32_t cid) { this->handle_client_timeout(cid); }) {}
 
         uint32_t Stop() {
             if (!_runtime->isInEventLoop()) return outputErrorCode::NotInEventLoop;
             _heartbeat.stopAll();
             if (_server) {
                 _server->stop();
+                _server.reset();
             }
             _state.setState(State::Stopped);
             return outputErrorCode::OK;
@@ -60,7 +61,7 @@ namespace SuOS::Uds::Router {
             if (!_runtime->isInEventLoop()) return outputErrorCode::NotInEventLoop;
             
             auto currentState = _state.getState();
-            if (currentState == State::Stopped) return outputErrorCode::UnknownError; // FIXME: use correct error code if available, but any error works
+            // if (currentState == State::Stopped) return outputErrorCode::UnknownError; 
             if (currentState == State::Running) return outputErrorCode::OK;
 
             _server = std::make_shared<SuOS::Uds::Server::Uds_Server>(
@@ -119,8 +120,18 @@ namespace SuOS::Uds::Router {
             bool authorized = perform_auth(pid, uid, gid, assigned_id);
 
             if (authorized) {
+                // 1. 如果 Main 还没连上，只允许 MAIN ID (1001) 的连接
+                if (!_main_online && assigned_id != SuOS::Config::Usr::MAIN) {
+                    std::cerr << "Router: Rejected connection from " << assigned_id << " because Main is offline." << std::endl;
+                    return {false, 0};
+                }
+
                 std::cout << "Client Authorized: PID=" << pid << " ID=" << assigned_id << std::endl;
                 
+                if (assigned_id == SuOS::Config::Usr::MAIN) {
+                    _main_online = true;
+                }
+
                 if (!_heartbeat_started) {
                     _heartbeat.startBroadcast();
                     _heartbeat_started = true;
@@ -130,7 +141,6 @@ namespace SuOS::Uds::Router {
 
                 // 报告给 Main 模块
                 report_to_main(assigned_id, true);
-                if (_status_cb) _status_cb(assigned_id, true);
             }
             return {authorized, assigned_id};
         }
@@ -195,15 +205,30 @@ namespace SuOS::Uds::Router {
         void handle_client_timeout(uint32_t cid) {
             std::cout << "Client " << cid << " heartbeat timeout. Closing." << std::endl;
             _server->close(cid);
-            _auth.removeEntity(cid);
-            report_to_main(cid, false);
-            if (_status_cb) _status_cb(cid, false);
+            process_disconnect(cid);
         }
 
         void on_uds_error(const uint32_t cid, uint32_t error_type, std::string message) {
+            std::cerr << "UDS Error on client " << cid << " [" << error_type << "]: " << message << std::endl;
+            // 构造错误消息发送给 Main
+            auto guard = _general_msg_builder.BuildonUsrError(error_type, message);
+            std::vector<uint8_t> payload(guard.data(), guard.data() + guard.size());
+            route_message(SuOS::Config::Usr::ROUTER, SuOS::Config::Part::ROUTER, 
+                         SuOS::Config::Usr::MAIN, SuOS::Config::Part::USR_REPORT, payload);
+
+            process_disconnect(cid);
+        }
+
+        void process_disconnect(uint32_t cid) {
             _heartbeat.stopClient(cid);
             _auth.removeEntity(cid);
-            if (_status_cb) _status_cb(cid, false);
+            report_to_main(cid, false);
+            
+            if (cid == SuOS::Config::Usr::MAIN) {
+                std::cout << "Router: Main disconnected. Stopping Router Service." << std::endl;
+                _main_online = false;
+                Stop();
+            }
         }
 
         // 辅助：内部发送//用于心跳
@@ -245,8 +270,9 @@ namespace SuOS::Uds::Router {
         SuOS::Uds::Msg::Router::RouterMsg_fromRouterBuilder _router_msg_builder;
         SuOS::Uds::Msg::Router::RouterMsg_toRouterParser _router_msg_parser;
         SuOS::Uds::Msg::General::GeneralMsg_fromMainParser _general_msg_parser;
-        OnClientStatus _status_cb;
+        SuOS::Uds::Msg::General::GeneralMsg_toMainBuilder _general_msg_builder;
         SuOS::Router::RouterAuthManager _auth;
         bool _heartbeat_started = false;
+        bool _main_online = false;
     };
 }

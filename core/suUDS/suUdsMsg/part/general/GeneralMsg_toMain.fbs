@@ -3,10 +3,16 @@ namespace SuOS.Uds.Msg.General;
 // ---- 空消息类型定义 (Command ID 映射) ----
 table UsrStopResponse { }
 
+table onUsrError {
+    code: uint32;
+    msg: string;
+}
+
 // ---- Union 定义 ----
 // 使用 union 将所有可能的空消息统一起来
 union GeneralPayload_toMain {
-    UsrStopResponse
+    UsrStopResponse,
+    onUsrError
 }
 
 // ---- 包装表 ----

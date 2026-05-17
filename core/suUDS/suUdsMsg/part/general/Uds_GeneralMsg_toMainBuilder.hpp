@@ -29,6 +29,16 @@ namespace SuOS::Uds::Msg::General {
             fbb_.Finish(root);
             return LockGuard(fbb_);
         }
+        // 构建 onUsrError 消息
+        LockGuard BuildonUsrError(uint32_t code, const std::string& msg) {
+            if (!_runtime->isInEventLoop()) throw std::runtime_error("Not in event loop");
+            fbb_.Clear();
+            auto msg__ = fbb_.CreateString(msg);
+            auto table = CreateonUsrError(fbb_, code, msg__);
+            auto root = CreateGeneralEnvelope_toMain(fbb_, GeneralPayload_toMain_onUsrError, table.Union());
+            fbb_.Finish(root);
+            return LockGuard(fbb_);
+        }
 
         flatbuffers::FlatBufferBuilder& fbb() { return fbb_; }
     private:

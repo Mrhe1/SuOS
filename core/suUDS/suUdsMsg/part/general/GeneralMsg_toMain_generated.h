@@ -21,35 +21,41 @@ namespace General {
 struct UsrStopResponse;
 struct UsrStopResponseBuilder;
 
+struct onUsrError;
+struct onUsrErrorBuilder;
+
 struct GeneralEnvelope_toMain;
 struct GeneralEnvelope_toMainBuilder;
 
 enum GeneralPayload_toMain : uint8_t {
   GeneralPayload_toMain_NONE = 0,
   GeneralPayload_toMain_UsrStopResponse = 1,
+  GeneralPayload_toMain_onUsrError = 2,
   GeneralPayload_toMain_MIN = GeneralPayload_toMain_NONE,
-  GeneralPayload_toMain_MAX = GeneralPayload_toMain_UsrStopResponse
+  GeneralPayload_toMain_MAX = GeneralPayload_toMain_onUsrError
 };
 
-inline const GeneralPayload_toMain (&EnumValuesGeneralPayload_toMain())[2] {
+inline const GeneralPayload_toMain (&EnumValuesGeneralPayload_toMain())[3] {
   static const GeneralPayload_toMain values[] = {
     GeneralPayload_toMain_NONE,
-    GeneralPayload_toMain_UsrStopResponse
+    GeneralPayload_toMain_UsrStopResponse,
+    GeneralPayload_toMain_onUsrError
   };
   return values;
 }
 
 inline const char * const *EnumNamesGeneralPayload_toMain() {
-  static const char * const names[3] = {
+  static const char * const names[4] = {
     "NONE",
     "UsrStopResponse",
+    "onUsrError",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameGeneralPayload_toMain(GeneralPayload_toMain e) {
-  if (::flatbuffers::IsOutRange(e, GeneralPayload_toMain_NONE, GeneralPayload_toMain_UsrStopResponse)) return "";
+  if (::flatbuffers::IsOutRange(e, GeneralPayload_toMain_NONE, GeneralPayload_toMain_onUsrError)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesGeneralPayload_toMain()[index];
 }
@@ -60,6 +66,10 @@ template<typename T> struct GeneralPayload_toMainTraits {
 
 template<> struct GeneralPayload_toMainTraits<SuOS::Uds::Msg::General::UsrStopResponse> {
   static const GeneralPayload_toMain enum_value = GeneralPayload_toMain_UsrStopResponse;
+};
+
+template<> struct GeneralPayload_toMainTraits<SuOS::Uds::Msg::General::onUsrError> {
+  static const GeneralPayload_toMain enum_value = GeneralPayload_toMain_onUsrError;
 };
 
 bool VerifyGeneralPayload_toMain(::flatbuffers::Verifier &verifier, const void *obj, GeneralPayload_toMain type);
@@ -94,6 +104,69 @@ inline ::flatbuffers::Offset<UsrStopResponse> CreateUsrStopResponse(
   return builder_.Finish();
 }
 
+struct onUsrError FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef onUsrErrorBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_CODE = 4,
+    VT_MSG = 6
+  };
+  uint32_t code() const {
+    return GetField<uint32_t>(VT_CODE, 0);
+  }
+  const ::flatbuffers::String *msg() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_MSG);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_CODE, 4) &&
+           VerifyOffset(verifier, VT_MSG) &&
+           verifier.VerifyString(msg()) &&
+           verifier.EndTable();
+  }
+};
+
+struct onUsrErrorBuilder {
+  typedef onUsrError Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_code(uint32_t code) {
+    fbb_.AddElement<uint32_t>(onUsrError::VT_CODE, code, 0);
+  }
+  void add_msg(::flatbuffers::Offset<::flatbuffers::String> msg) {
+    fbb_.AddOffset(onUsrError::VT_MSG, msg);
+  }
+  explicit onUsrErrorBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<onUsrError> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<onUsrError>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<onUsrError> CreateonUsrError(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t code = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> msg = 0) {
+  onUsrErrorBuilder builder_(_fbb);
+  builder_.add_msg(msg);
+  builder_.add_code(code);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<onUsrError> CreateonUsrErrorDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t code = 0,
+    const char *msg = nullptr) {
+  auto msg__ = msg ? _fbb.CreateString(msg) : 0;
+  return SuOS::Uds::Msg::General::CreateonUsrError(
+      _fbb,
+      code,
+      msg__);
+}
+
 struct GeneralEnvelope_toMain FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef GeneralEnvelope_toMainBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -110,6 +183,9 @@ struct GeneralEnvelope_toMain FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
   const SuOS::Uds::Msg::General::UsrStopResponse *payload_as_UsrStopResponse() const {
     return payload_type() == SuOS::Uds::Msg::General::GeneralPayload_toMain_UsrStopResponse ? static_cast<const SuOS::Uds::Msg::General::UsrStopResponse *>(payload()) : nullptr;
   }
+  const SuOS::Uds::Msg::General::onUsrError *payload_as_onUsrError() const {
+    return payload_type() == SuOS::Uds::Msg::General::GeneralPayload_toMain_onUsrError ? static_cast<const SuOS::Uds::Msg::General::onUsrError *>(payload()) : nullptr;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint8_t>(verifier, VT_PAYLOAD_TYPE, 1) &&
@@ -121,6 +197,10 @@ struct GeneralEnvelope_toMain FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::T
 
 template<> inline const SuOS::Uds::Msg::General::UsrStopResponse *GeneralEnvelope_toMain::payload_as<SuOS::Uds::Msg::General::UsrStopResponse>() const {
   return payload_as_UsrStopResponse();
+}
+
+template<> inline const SuOS::Uds::Msg::General::onUsrError *GeneralEnvelope_toMain::payload_as<SuOS::Uds::Msg::General::onUsrError>() const {
+  return payload_as_onUsrError();
 }
 
 struct GeneralEnvelope_toMainBuilder {
@@ -161,6 +241,10 @@ inline bool VerifyGeneralPayload_toMain(::flatbuffers::Verifier &verifier, const
     }
     case GeneralPayload_toMain_UsrStopResponse: {
       auto ptr = reinterpret_cast<const SuOS::Uds::Msg::General::UsrStopResponse *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case GeneralPayload_toMain_onUsrError: {
+      auto ptr = reinterpret_cast<const SuOS::Uds::Msg::General::onUsrError *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;
