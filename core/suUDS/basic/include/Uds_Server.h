@@ -24,16 +24,19 @@ namespace SuOS::Uds::Server {
             uint32_t client_id; // 给这个新客户端分配的内部 ID
         };
         using MessageCallback = std::function<void(uint32_t cid, const std::vector<char> data)>;
-        using onError = std::function<void(const uint32_t cid, uint32_t error_type, std::string message)>;
+        using onError = std::function<void(uint32_t error_type, std::string message)>;
         // 返回  表示接受连接，返回 false 表示拒绝并关闭该 socket
-        using onConnected = std::function<accept_result(int pid, int uid, int gid) >;
+        using onConnected = std::function<accept_result(int pid, int uid, int gid)>;
+        // error_type表示断开连接的原因
+        using onDisConnected = std::function<void(uint32_t cid, uint32_t error_type, std::string message)>;
 
         Uds_Server(boost::asio::io_context& ioc,
             //const uint32_t cid,
             const std::string path,
             MessageCallback cb,
             onError onEr,
-            onConnected oncted);
+            onConnected oncted,
+            onDisConnected ondiscted);
 
         virtual ~Uds_Server();
 
@@ -61,7 +64,7 @@ namespace SuOS::Uds::Server {
         //void get_peer_credentials();
         void do_accept();
         void on_server_error(const boost::system::error_code& e);
-        void handle_error(const uint32_t cid, uint32_t error_type, std::string message);
+        void handle_error(uint32_t error_type, std::string message);
 
         uint32_t next_packet_length_ = 0;
         std::vector<char> body_buf_;
@@ -76,6 +79,7 @@ namespace SuOS::Uds::Server {
         MessageCallback on_msg_;
         onConnected on_connected_;
         onError on_error_;
+        onDisConnected on_disconnected_;
         mutable std::mutex mutex_;
         std::map<uint32_t, std::shared_ptr<Uds_Session>> sessions_; // 管理多个 Session
     };

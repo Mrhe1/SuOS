@@ -138,13 +138,13 @@ namespace SuOS::Uds::Server {
         uint32_t next_packet_length_ = 0;
         std::vector<char> body_buf_;
         Uds_Server::MessageCallback on_msg_;
-        Uds_Server::onError on_error_;
+        std::function<void(uint32_t, uint32_t, std::string)> on_error_;
     };
 
     Uds_Server::Uds_Server(io_context& ioc, const std::string path,
-        MessageCallback cb, onError onEr, onConnected oncted)
+        MessageCallback cb, onError onEr, onConnected oncted, onDisConnected ondiscted)
         : acceptor_(ioc), socket_(ioc), timer_(ioc), path_(path),
-        on_msg_(cb), on_connected_(oncted), on_error_(onEr) {
+        on_msg_(cb), on_connected_(oncted), on_error_(onEr), on_disconnected_(ondiscted) {
     }
 
     void Uds_Server::start() {
@@ -282,20 +282,19 @@ namespace SuOS::Uds::Server {
                 return; // 忽略错误，因为已经不存在了
             }
             
-            if (error_type == SuOS::Uds::Errorcode::ConnectionClosed ||
-                error_type == SuOS::Uds::Errorcode::ConnectTimedOut) {
-                session_to_stop = it->second; // 拷贝指针，增加引用计数
-                sessions_.erase(it);          // 从 map 移除，此时还不会析构
-            }
+            session_to_stop = it->second; // 拷贝指针，增加引用计数
+            sessions_.erase(it);          // 从 map 移除，此时还不会析构           
         }
 
         // 在锁外执行资源释放，避免 lock 状态下调用 handle_error 产生潜在死锁
-        if (session_to_stop && (error_type == SuOS::Uds::Errorcode::ConnectionClosed ||
-            error_type == SuOS::Uds::Errorcode::ConnectTimedOut)) {
+        if (session_to_stop) {
             session_to_stop->close();
         }
 
-        handle_error(cid, error_type, message);
+        // session内部错误不触发整个server的错误处理
+        if (on_disconnected_) {
+            on_disconnected_(cid, error_type, message);
+        }
     }
 
     void Uds_Server::on_server_error(const boost::system::error_code& e) {
@@ -327,12 +326,11 @@ namespace SuOS::Uds::Server {
             return; // 正常取消，不触发回调
         }
 
-        // -1表示server错误
-        handle_error(-1, type, message);
+        handle_error(type, message);
     }
 
-    void Uds_Server::handle_error(const uint32_t cid, uint32_t error_type, std::string message) {
-        if (on_error_) on_error_(cid, error_type, message);
+    void Uds_Server::handle_error(uint32_t error_type, std::string message) {
+        if (on_error_) on_error_(error_type, message);
 
         if (error_type == SuOS::Uds::Errorcode::NoSuchFileOrDirectory ||
             error_type == SuOS::Uds::Errorcode::AddressInUse ||

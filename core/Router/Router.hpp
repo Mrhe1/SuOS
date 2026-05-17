@@ -68,8 +68,9 @@ namespace SuOS::Uds::Router {
                 _runtime->getIoContext(),
                 SuOS::Uds::ClientMgr::Df::uds_path, // UDS Path                 // Timeout
                 std::bind(&RouterManager::on_uds_message, this, std::placeholders::_1, std::placeholders::_2),
-                std::bind(&RouterManager::on_uds_error, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-                std::bind(&RouterManager::on_uds_connect, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
+                std::bind(&RouterManager::on_uds_error, this, std::placeholders::_1, std::placeholders::_2),
+                std::bind(&RouterManager::on_uds_connect, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+                std::bind(&RouterManager::on_uds_disconnected, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
             );
 
             _server->start();
@@ -205,18 +206,21 @@ namespace SuOS::Uds::Router {
         void handle_client_timeout(uint32_t cid) {
             std::cout << "Client " << cid << " heartbeat timeout. Closing." << std::endl;
             _server->close(cid);
-            process_disconnect(cid);
         }
 
-        void on_uds_error(const uint32_t cid, uint32_t error_type, std::string message) {
-            std::cerr << "UDS Error on client " << cid << " [" << error_type << "]: " << message << std::endl;
+        void on_uds_error(uint32_t error_type, std::string message) {
+            std::cerr << "Global UDS Server Error [" << error_type << "]: " << message << std::endl;
             // 构造错误消息发送给 Main
             auto guard = _general_msg_builder.BuildonUsrError(error_type, message);
             std::vector<uint8_t> payload(guard.data(), guard.data() + guard.size());
             route_message(SuOS::Config::Usr::ROUTER, SuOS::Config::Part::ROUTER, 
                          SuOS::Config::Usr::MAIN, SuOS::Config::Part::USR_REPORT, payload);
+        }
 
+        SuOS::Uds::Server::Uds_Server::accept_result on_uds_disconnected(uint32_t cid, uint32_t error_type, std::string message) {
+            std::cout << "UDS Client " << cid << " Disconnected: " << message << std::endl;
             process_disconnect(cid);
+            return {true, cid};
         }
 
         void process_disconnect(uint32_t cid) {
@@ -224,6 +228,7 @@ namespace SuOS::Uds::Router {
             _auth.removeEntity(cid);
             report_to_main(cid, false);
             
+            // 如果与main断开连接就关闭router
             if (cid == SuOS::Config::Usr::MAIN) {
                 std::cout << "Router: Main disconnected. Stopping Router Service." << std::endl;
                 _main_online = false;
